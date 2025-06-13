@@ -3,8 +3,10 @@ import os
 import uuid
 import shutil
 
+# directory to where temporary student code files will be saved
 STUDENT_CODE_DIR = "student_code"
 
+# function that takes the student submitted code, runs it in docker, and returns its output
 def run_code_in_docker(code: str) -> str:
     file_id = str(uuid.uuid4())
     filename = f"{file_id}.py"
