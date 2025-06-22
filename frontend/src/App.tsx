@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 
-//testing
 const API_URL = import.meta.env.VITE_API_URL;
-console.log(API_URL);
 
-type User = {
+
+interface User {
   id: number;
   name: string;
   email: string;
   role: string;
-};
+}
 
 function App() {
   const [users, setUsers] = useState<User[]>([]);
@@ -18,8 +17,7 @@ function App() {
     fetch(`${API_URL}/users`)
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
-        setUsers(data);  
+        setUsers(data.users);
       })
       .catch((err) => console.error("Error fetching users:", err));
   }, []);
