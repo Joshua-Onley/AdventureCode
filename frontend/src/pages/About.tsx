@@ -4,7 +4,6 @@ const About: React.FC = () => {
   return (
     <div>
       <h1>About AdventureCode</h1>
-      
     </div>
   );
 };
