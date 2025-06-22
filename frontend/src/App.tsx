@@ -10,6 +10,7 @@ interface User {
   role: string;
 }
 
+
 function App() {
   const [users, setUsers] = useState<User[]>([]);
 
