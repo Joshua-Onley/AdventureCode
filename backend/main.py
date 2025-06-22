@@ -1,25 +1,37 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, Form
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
 from database import engine, get_db
 from models import Base, User, Problem, Adventure, Submission
-import os
-
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
 
+origins = [
+    "https://victorious-bay-07769b703.1.azurestaticapps.net",
+    "http://localhost:3000",  
+]
 
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+@app.get("/")
+async def read_root():
+    return {"message": "API root"}
 
 @app.post("/users")
-async def create_user(name: str = Form(...), email: str = Form(...), role: str = Form("student"), db: Session = Depends(get_db)):
+async def create_user(
+    name: str = Form(...),
+    email: str = Form(...),
+    role: str = Form("student"),
+    db: Session = Depends(get_db)
+):
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     user = User(name=name, email=email, role=role)
@@ -32,7 +44,6 @@ async def create_user(name: str = Form(...), email: str = Form(...), role: str =
 async def list_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return {"users": users}
-
 
 @app.post("/problems")
 async def create_problem(
@@ -59,7 +70,6 @@ async def create_problem(
 async def list_problems(db: Session = Depends(get_db)):
     problems = db.query(Problem).all()
     return {"problems": problems}
-
 
 @app.post("/adventures")
 async def create_adventure(
@@ -105,26 +115,6 @@ async def submit_solution(
     db.refresh(submission)
     return {"submission": submission, "is_correct": is_correct}
 
-@app.get("/users-form", response_class=HTMLResponse)
-async def users_form(request: Request):
-    return templates.TemplateResponse("users_form.html", {"request": request})
-
-@app.get("/problems-form", response_class=HTMLResponse)
-async def problems_form(request: Request):
-    return templates.TemplateResponse("problems_form.html", {"request": request})
-
-@app.get("/adventures-form", response_class=HTMLResponse)
-async def adventures_form(request: Request):
-    return templates.TemplateResponse("adventures_form.html", {"request": request})
-
-@app.get("/submit-form", response_class=HTMLResponse)
-async def submit_form(request: Request):
-    return templates.TemplateResponse("submit_form.html", {"request": request})
-
-
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
-
-
-# testing
