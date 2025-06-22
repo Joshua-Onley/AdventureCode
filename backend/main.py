@@ -10,7 +10,7 @@ app = FastAPI()
 
 origins = [
     "https://victorious-bay-07769b703.1.azurestaticapps.net",
-    "http://localhost:3000",  
+    "http://localhost:5173",  
 ]
 
 app.add_middleware(
