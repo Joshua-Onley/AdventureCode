@@ -6,8 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+#test
 
+app = FastAPI()
 
 origins = [
     "https://victorious-bay-07769b703.1.azurestaticapps.net",
