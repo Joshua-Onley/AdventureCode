@@ -18,7 +18,8 @@ function App() {
     fetch(`${API_URL}/users`)
       .then((res) => res.json())
       .then((data) => {
-        setUsers(data.users);
+        console.log(data)
+        setUsers(data);  
       })
       .catch((err) => console.error("Error fetching users:", err));
   }, []);
