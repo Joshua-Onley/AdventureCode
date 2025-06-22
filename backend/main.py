@@ -8,7 +8,6 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
 origins = [
     "https://victorious-bay-07769b703.1.azurestaticapps.net",
     "http://localhost:5173",  
