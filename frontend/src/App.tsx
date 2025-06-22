@@ -1,17 +1,18 @@
-import { useUsers } from "./hooks/useUsers";
-import UserList from "./components/UserList";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
+import About from "./pages/About";
 
-function App() {
-  const { users, loading, error } = useUsers();
 
+
+const App: React.FC = () => {
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Users</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error.message}</p>}
-      <UserList users={users} />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
