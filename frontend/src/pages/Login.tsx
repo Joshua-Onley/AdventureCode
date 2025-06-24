@@ -48,7 +48,7 @@ export default function Login() {
       params.append("grant_type", "password");
 
       const res = await axios.post<LoginSuccessResponse>(
-        "https://adventurecode-bcekcrhpauffhzbn.uksouth-01.azurewebsites.net/login", // Use deployed URL in production
+        "http://127.0.0.1:8000/login", // Use deployed URL in production
         params,
         {
           headers: {

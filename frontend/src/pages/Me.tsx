@@ -21,7 +21,7 @@ const Me: React.FC = () => {
       }
 
       try {
-        const response = await fetch('https://adventurecode-bcekcrhpauffhzbn.uksouth-01.azurewebsites.net/me', {
+        const response = await fetch('http://127.0.0.1:8000/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

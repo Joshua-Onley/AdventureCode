@@ -2,7 +2,7 @@ from jose import JWTError
 from fastapi import FastAPI, Depends, HTTPException, Form, Security
 from sqlalchemy.orm import Session
 from database import engine, get_db
-from models import Base, User, Problem, Adventure, Submission
+from models import Base, User
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
