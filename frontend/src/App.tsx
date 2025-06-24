@@ -3,6 +3,7 @@ import Landing from "./pages/Landing";
 import About from "./pages/About";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import Me from "./pages/Me";
 
 
 
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
+        <Route path="/me" element={<Me />} />
       </Routes>
     </Router>
   );
