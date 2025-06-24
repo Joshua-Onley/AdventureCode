@@ -3,6 +3,16 @@ from sqlalchemy.orm import Session
 from database import engine, get_db
 from models import Base, User, Problem, Adventure, Submission
 from fastapi.middleware.cors import CORSMiddleware
+from passlib.context import CryptContext
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
 
 Base.metadata.create_all(bind=engine)
 
@@ -27,20 +37,33 @@ app.add_middleware(
 async def read_root():
     return {"message": "API root"}
 
-@app.post("/users")
-async def create_user(
+@app.post("/signup")
+async def signup(
     name: str = Form(...),
     email: str = Form(...),
-    role: str = Form("student"),
+    password: str = Form(...),
     db: Session = Depends(get_db)
 ):
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
-    user = User(name=name, email=email, role=role)
+    hashed_pw = hash_password(password)
+    user = User(name=name, email=email, password=hashed_pw)
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"user": user}
+    return {"msg": "Account created", "user": {"id": user.id, "email": user.email}}
+
+@app.post("/login")
+async def login(
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify_password(password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"msg": "Login successful", "user": {"id": user.id, "email": user.email}}
+
 
 @app.get("/users")
 async def list_users(db: Session = Depends(get_db)):
