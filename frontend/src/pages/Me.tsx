@@ -34,7 +34,6 @@ const Me: React.FC = () => {
 
         const data = await response.json();
         
-        // Ensure the data structure matches what your backend sends
         if (data.id && data.email) {
           setUser(data);
         } else {
