@@ -28,6 +28,7 @@ const isValidationErrorResponse = (data: unknown): data is ValidationErrorRespon
 };
 
 export default function Login() {
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -48,7 +49,7 @@ export default function Login() {
       params.append("grant_type", "password");
 
       const res = await axios.post<LoginSuccessResponse>(
-        "http://127.0.0.1:8000/login", // Use deployed URL in production
+        `${FASTAPI_BACKEND_URL}/login`, 
         params,
         {
           headers: {

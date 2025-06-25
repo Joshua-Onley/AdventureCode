@@ -4,6 +4,8 @@ import About from "./pages/About";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Me from "./pages/Me";
+import CreateProblem from "./pages/CreateProblem";
+import AttemptProblem from "./pages/AttemptProblem";
 
 
 
@@ -16,6 +18,8 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/me" element={<Me />} />
+        <Route path="/problems" element={<CreateProblem />} />
+        <Route path="/attempt" element={<AttemptProblem />} />
       </Routes>
     </Router>
   );

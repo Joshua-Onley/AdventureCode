@@ -12,6 +12,8 @@ export default function Signup() {
   });
 
   const [message, setMessage] = useState("");
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,7 +23,7 @@ export default function Signup() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "https://adventurecode-bcekcrhpauffhzbn.uksouth-01.azurewebsites.net/signup",
+        `${FASTAPI_BACKEND_URL}/signup`,
         new URLSearchParams(formData),
         {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },

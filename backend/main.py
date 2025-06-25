@@ -2,18 +2,22 @@ from jose import JWTError
 from fastapi import FastAPI, Depends, HTTPException, Form, Security
 from sqlalchemy.orm import Session
 from database import engine, get_db
-from models import Base, User
+from models import Base, User, Problem
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from auth import hash_password, verify_password, create_access_token, decode_access_token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import uuid
+from pydantic import BaseModel
+import httpx
+from fastapi.responses import JSONResponse
+import logging
+import traceback
 
-
+logger = logging.getLogger("uvicorn.error")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
 Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
 
 origins = [
@@ -30,6 +34,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_extension(language: str) -> str:
+    mapping = {
+        "python3": "py",
+        "python": "py",
+        "javascript": "js",
+        "java": "java",
+        "c": "c",
+        "cpp": "cpp",
+        "ruby": "rb",
+    }
+    return mapping.get(language.lower(), "txt")
+
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         email = decode_access_token(token)
@@ -42,6 +58,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         return user
     except JWTError as e:  
         raise HTTPException(status_code=401, detail="Token validation failed")
+    
+def generate_access_code(db: Session) -> str:
+    while True:
+        code = uuid.uuid4().hex[:6]
+        if not db.query(Problem).filter(Problem.access_code == code).first():
+            return code
+
 
 @app.get("/")
 async def read_root():
@@ -89,3 +112,123 @@ async def list_users(db: Session = Depends(get_db)):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+@app.post("/problems")
+async def create_problem(
+    title: str = Form(...),
+    description: str = Form(...),
+    code_snippet: str = Form(...),
+    expected_output: str = Form(...),
+    language: str = Form(...),
+    is_public: bool = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    access_code = generate_access_code(db)
+
+    new_problem = Problem(
+        access_code=access_code,
+        title=title,
+        description=description,
+        code_snippet=code_snippet,
+        expected_output=expected_output,
+        language=language,
+        is_public=is_public,
+        creator_id=None if is_public else current_user.id
+    )
+
+    db.add(new_problem)
+    db.commit()
+    db.refresh(new_problem)
+
+    return {
+        "message": "Problem created successfully",
+        "access_code": access_code,
+        "problem_id": new_problem.id
+    }
+
+PISTON_URL = "https://emkc.org/api/v2/piston/execute"
+
+class Submission(BaseModel):
+    access_code: str
+    submitted_code: str
+
+version_map = {
+    "python3": "3.10.0",    
+    "python": "3.10.0",      
+    "javascript": "18.15.0",  
+    "node-js": "18.15.0",    
+    "node-javascript": "18.15.0",
+    "js": "18.15.0",
+    "java": "15.0.2",  
+}     
+
+@app.post("/submissions")
+async def submit_solution(
+    access_code: str = Form(...),
+    code: str = Form(...),
+    language: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        
+        problem = db.query(Problem).filter(Problem.access_code == access_code.lower()).first()
+        if not problem:
+            return JSONResponse(status_code=404, content={"error": "Problem not found"})
+
+        lang = language.lower()
+        version = version_map.get(lang)
+        if not version:
+            return JSONResponse(status_code=400, content={"error": "Unsupported language or missing version"})
+
+        ext = get_extension(lang)
+        if not ext:
+            return JSONResponse(status_code=400, content={"error": "Unsupported language extension"})
+
+        payload = {
+            "language": lang,
+            "version": version,
+            "files": [{"name": f"Main.{ext}", "content": code}]
+        }
+
+      
+        async with httpx.AsyncClient() as client:
+            response = await client.post("https://emkc.org/api/v2/piston/execute", json=payload)
+
+        if response.status_code != 200:
+            return JSONResponse(status_code=500, content={"error": "Piston API failed", "details": response.text})
+
+        result = response.json()
+        run_result = result.get("run", {})
+
+        user_output = run_result.get("output", "").strip()
+        expected_output = problem.expected_output.strip()
+
+       
+        if user_output == expected_output:
+            message = "Correct! Well done."
+        else:
+            message = f"Incorrect. Expected output:\n{expected_output}\n\nYour output:\n{user_output}"
+
+    
+        return {
+            "message": message,
+            "output": user_output,
+            "stdout": run_result.get("stdout"),
+            "stderr": run_result.get("stderr"),
+            "ran": bool(run_result),
+            "language": lang,
+        }
+
+    except Exception as e:
+        logger.error(f"Error in /submissions: {e}")
+        logger.error(traceback.format_exc())
+        return JSONResponse(status_code=500, content={"error": "Internal server error", "details": str(e)})
+    
+@app.get("/problems/access/{access_code}")
+def get_problem_by_access_code(access_code: str, db: Session = Depends(get_db)):
+    problem = db.query(Problem).filter(Problem.access_code == access_code).first()
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+    return problem
