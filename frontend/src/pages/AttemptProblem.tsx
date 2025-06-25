@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 
 const AttemptProblem = () => {
@@ -33,6 +33,7 @@ const AttemptProblem = () => {
   
       setMessage(res.data.message || 'Submitted successfully.')
     } catch (err) {
+      console.error(err)
       setMessage('Error submitting solution.')
     }
   }

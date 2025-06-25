@@ -41,7 +41,7 @@ const CreateProblem = () => {
         return;
       }
 
-      const res = await axios.post(
+      await axios.post(
         `${FASTAPI_BACKEND_URL}/problems`,
         new URLSearchParams({
           title: formData.title,
