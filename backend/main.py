@@ -36,15 +36,24 @@ app.add_middleware(
 
 def get_extension(language: str) -> str:
     mapping = {
-        "python3": "py",
         "python": "py",
+        "python2": "py",
+        "python3": "py",
         "javascript": "js",
+        "typescript": "ts",
         "java": "java",
         "c": "c",
         "cpp": "cpp",
         "ruby": "rb",
+        "go": "go",
+        "php": "php",
+        "swift": "swift",
+        "rust": "rs",
+        "bash": "sh",
+        "kotlin": "kt",
     }
-    return mapping.get(language.lower(), "txt")
+    return mapping.get(language.lower(), "")
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -155,14 +164,22 @@ class Submission(BaseModel):
     submitted_code: str
 
 version_map = {
-    "python3": "3.10.0",    
-    "python": "3.10.0",      
+    "python": "3.10.0",       
     "javascript": "18.15.0",  
-    "node-js": "18.15.0",    
-    "node-javascript": "18.15.0",
-    "js": "18.15.0",
-    "java": "15.0.2",  
-}     
+    "typescript": "1.32.3",  
+    "java": "15.0.2",         
+    "c": "10.2.0",       
+    "cpp": "10.2.0",        
+    "ruby": "3.0.1",
+    "go": "1.16.2",
+    "php": "8.2.3",
+    "swift": "5.8.1",         
+    "rust": "1.68.2",
+    "bash": "5.2.0",
+    "kotlin": "1.8.20",
+   
+}
+
 
 @app.post("/submissions")
 async def submit_solution(

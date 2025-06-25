@@ -6,8 +6,10 @@ interface UserData {
   name: string;
 }
 
+const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
+
 const Me: React.FC = () => {
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
+  
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,6 @@ const Me: React.FC = () => {
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch user data');
-        // Clear invalid token
         localStorage.removeItem('token');
       } finally {
         setLoading(false);

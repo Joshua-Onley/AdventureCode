@@ -1,12 +1,26 @@
 import { useState } from 'react'
 import axios from 'axios'
 
+interface Problem {
+  title: string,
+  description: string,
+  code_snippet: string,
+  language: string
+
+}
+
+interface SubmissionResponse {
+  message?: string;
+}
+
+const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
+
 const AttemptProblem = () => {
   const [accessCode, setAccessCode] = useState('')
-  const [problem, setProblem] = useState<any>(null)
+  const [problem, setProblem] = useState<Problem | null>(null)
   const [solution, setSolution] = useState('')
   const [message, setMessage] = useState('')
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
+  
   const fetchProblem = async () => {
     try {
       const res = await axios.get(`${FASTAPI_BACKEND_URL}/problems/access/${accessCode}`) 
@@ -20,12 +34,15 @@ const AttemptProblem = () => {
 
   const submitSolution = async () => {
     try {
+      if (!problem) return;
+
       const formData = new URLSearchParams()
       formData.append('access_code', accessCode.trim().toLowerCase())
       formData.append('code', solution)
-      formData.append('language', 'python')  // TODO: add support for more languages
+      formData.append('language', problem.language)
+
   
-      const res = await axios.post(`${FASTAPI_BACKEND_URL}/submissions`, formData, {
+      const res = await axios.post<SubmissionResponse>(`${FASTAPI_BACKEND_URL}/submissions`, formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },

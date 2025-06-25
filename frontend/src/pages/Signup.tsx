@@ -4,6 +4,8 @@ import axios, { AxiosError } from "axios";
 
 type ErrorResponse = { detail: string };
 
+const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
+
 export default function Signup() {
   const [formData, setFormData] = useState({
     name: "",
@@ -12,8 +14,6 @@ export default function Signup() {
   });
 
   const [message, setMessage] = useState("");
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
