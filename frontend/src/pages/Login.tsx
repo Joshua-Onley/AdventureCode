@@ -28,7 +28,7 @@ const isValidationErrorResponse = (data: unknown): data is ValidationErrorRespon
 };
 
 export default function Login() {
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   const [formData, setFormData] = useState({
     email: "",
     password: "",

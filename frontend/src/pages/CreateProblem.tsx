@@ -15,7 +15,7 @@ const isValidationErrorResponse = (data: any): data is ValidationErrorResponse =
 };
 
 const CreateProblem = () => {
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   const [formData, setFormData] = useState({
     language: "",
     title: "",

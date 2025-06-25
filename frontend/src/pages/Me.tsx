@@ -7,7 +7,7 @@ interface UserData {
 }
 
 const Me: React.FC = () => {
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   const [user, setUser] = useState<UserData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

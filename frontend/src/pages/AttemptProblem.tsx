@@ -6,7 +6,7 @@ const AttemptProblem = () => {
   const [problem, setProblem] = useState<any>(null)
   const [solution, setSolution] = useState('')
   const [message, setMessage] = useState('')
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   const fetchProblem = async () => {
     try {
       const res = await axios.get(`${FASTAPI_BACKEND_URL}/problems/access/${accessCode}`) 

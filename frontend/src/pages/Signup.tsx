@@ -12,7 +12,7 @@ export default function Signup() {
   });
 
   const [message, setMessage] = useState("");
-  const FASTAPI_BACKEND_URL = import.meta.env.VITE_FASTAPI_BACKEND_URL;
+  const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
