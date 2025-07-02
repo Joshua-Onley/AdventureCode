@@ -10,8 +10,6 @@ import CreateAdventure from "./pages/CreateAdventure";
 import FetchUserAdventures from "./pages/MyAdventures";
 import AdventureDetail from "./components/adventure/AdventureDetail"
 
-
-
 const App: React.FC = () => {
   return (
     <Router>

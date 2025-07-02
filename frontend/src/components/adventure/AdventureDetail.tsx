@@ -42,7 +42,7 @@ const AdventureDetail: React.FC = () => {
   const navigate = useNavigate();
   const [adventure, setAdventure] = useState<AdventureDetailResponse | null>(null);
   const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState(true); // Add this line
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) {
