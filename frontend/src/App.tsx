@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import Me from "./pages/Me";
 import CreateProblem from "./pages/CreateProblem";
 import AttemptProblem from "./pages/AttemptProblem";
+import CreateAdventure from "./pages/CreateAdventure";
+import FetchUserAdventures from "./pages/MyAdventures";
+import AdventureDetail from "./components/adventure/AdventureDetail"
 
 
 
@@ -20,6 +23,9 @@ const App: React.FC = () => {
         <Route path="/me" element={<Me />} />
         <Route path="/problems" element={<CreateProblem />} />
         <Route path="/attempt" element={<AttemptProblem />} />
+        <Route path="/create-adventure" element={<CreateAdventure />} />
+        <Route path="/my-adventures" element={<FetchUserAdventures />}/>
+        <Route path="/adventures/:id" element={<AdventureDetail />} />
       </Routes>
     </Router>
   );

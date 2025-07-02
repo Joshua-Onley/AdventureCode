@@ -1,96 +1,125 @@
-import { useState } from 'react'
-import axios from 'axios'
+import { useState, useEffect } from "react";
+import { useFetchProblem, useSubmitSolution } from "../hooks/useProblem";
 
-interface Problem {
-  title: string,
-  description: string,
-  code_snippet: string,
-  language: string
+export default function AttemptProblem() {
+  const [accessCode, setAccessCode] = useState("");
+  const [solution, setSolution] = useState("");
+  const [problemLoaded, setProblemLoaded] = useState(false);
 
-}
+  const {
+    problem,
+    loading: loadingProblem,
+    error: fetchError,
+    load: loadProblem,
+  } = useFetchProblem();
 
-interface SubmissionResponse {
-  message?: string;
-}
+  const {
+    loading: loadingSubmit,
+    error: submitError,
+    message: submitMessage,
+    submit,
+  } = useSubmitSolution();
 
-const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
-
-const AttemptProblem = () => {
-  const [accessCode, setAccessCode] = useState('')
-  const [problem, setProblem] = useState<Problem | null>(null)
-  const [solution, setSolution] = useState('')
-  const [message, setMessage] = useState('')
-  
-  const fetchProblem = async () => {
-    try {
-      const res = await axios.get(`${FASTAPI_BACKEND_URL}/problems/access/${accessCode}`) 
-      setProblem(res.data)
-      setMessage('')
-    } catch (err) {
-      console.error(err)
-      setMessage('Problem not found.')
+  useEffect(() => {
+    if (problem) {
+      setSolution(problem.code_snippet || "");
+      setProblemLoaded(true);
     }
-  }
+  }, [problem]);
 
-  const submitSolution = async () => {
-    try {
-      if (!problem) return;
+  const onLoad = () => {
+    setProblemLoaded(false);
+    loadProblem(accessCode.trim().toLowerCase());
+  };
 
-      const formData = new URLSearchParams()
-      formData.append('access_code', accessCode.trim().toLowerCase())
-      formData.append('code', solution)
-      formData.append('language', problem.language)
+  const onSubmit = () => {
+    if (!problem) return;
+    submit({
+      access_code: accessCode.trim().toLowerCase(),
+      code: solution,
+      language: problem.language,
+    });
+  };
 
-  
-      const res = await axios.post<SubmissionResponse>(`${FASTAPI_BACKEND_URL}/submissions`, formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      })
-  
-      setMessage(res.data.message || 'Submitted successfully.')
-    } catch (err) {
-      console.error(err)
-      setMessage('Error submitting solution.')
-    }
-  }
+  const onCancel = () => {
+    setAccessCode("");
+    setProblemLoaded(false);
+  };
 
   return (
     <div>
       <h2>Attempt a Problem</h2>
 
-      {!problem && (
-        <>
-          <input
-            type="text"
-            placeholder="Enter access code"
-            value={accessCode}
-            onChange={(e) => setAccessCode(e.target.value)}
-          />
-          <button onClick={fetchProblem}>Load Problem</button>
-        </>
-      )}
+      {!problemLoaded ? (
+        <div>
+          <div>
+            <label htmlFor="accessCode">
+              Enter Access Code:
+            </label>
+            <input
+              id="accessCode"
+              type="text"
+              placeholder="Enter access code"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              
+            />
+          </div>
+          
+          <div>
+            <button
+              onClick={onLoad}
+              disabled={loadingProblem || !accessCode.trim()}
+            >
+              {loadingProblem ? "Loading…" : "Load Problem"}
+            </button>
+          </div>
+          
+          {fetchError && <div className="error-message">{fetchError}</div>}
+        </div>
+      ) : problem ? (
+        <div>
+          <div>
+            <h3>{problem.title}</h3>
+            <p>Language: {problem.language}</p>
+          </div>
+          
+          <div>
+            <p>{problem.description}</p>
+          </div>
+          
+          <div>
+            <label>Complete the code:</label>
+            <div>
+              <pre>
+                {problem.code_snippet}
+              </pre>
+            </div>
+            <textarea
+              value={solution}
+              onChange={(e) => setSolution(e.target.value)}
+              placeholder="Add your solution code here..."
+              rows={10}
+            />
+          </div>
+          
+          <div>
+            <button
+              onClick={onSubmit}
+              disabled={loadingSubmit}
+              
+            >
+              {loadingSubmit ? "Submitting…" : "Submit Solution"}
+            </button>
+            <button onClick={onCancel} >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
 
-      {problem && (
-        <>
-          <h3>{problem.title}</h3>
-          <p>{problem.description}</p>
-          <pre>{problem.code_snippet}</pre>
-          <textarea
-            rows={10}
-            cols={50}
-            value={solution}
-            onChange={(e) => setSolution(e.target.value)}
-            placeholder="Complete the code"
-          />
-          <br />
-          <button onClick={submitSolution}>Submit</button>
-        </>
-      )}
-
-      {message && <p>{message}</p>}
+      {submitError && <div>{submitError}</div>}
+      {submitMessage && <div>{submitMessage}</div>}
     </div>
-  )
+  );
 }
-
-export default AttemptProblem

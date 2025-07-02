@@ -1,23 +1,10 @@
-from jose import JWTError
-from fastapi import FastAPI, Depends, HTTPException, Form, Security
-from sqlalchemy.orm import Session
-from database import engine, get_db
-from models import Base, User, Problem
 from fastapi.middleware.cors import CORSMiddleware
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-from auth import hash_password, verify_password, create_access_token, decode_access_token
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-import uuid
-from pydantic import BaseModel
-import httpx
+from fastapi import FastAPI, Depends, HTTPException, Form, Security, Request
 from fastapi.responses import JSONResponse
 import logging
 import traceback
 
-logger = logging.getLogger("uvicorn.error")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
 
 origins = [
@@ -33,6 +20,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def all_exception_handler(request: Request, exc: Exception):
+    logging.getLogger("uvicorn.error").error("Unhandled exception", exc_info=exc)
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "detail": str(exc)},
+    )
+
+from jose import JWTError
+from sqlalchemy.orm import Session
+from database import engine, get_db
+from models import Base, User, Problem, Adventure
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from auth import hash_password, verify_password, create_access_token, decode_access_token
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import uuid
+from pydantic import BaseModel
+import httpx
+from fastapi.encoders import jsonable_encoder  
+from schemas import AdventureCreate, AdventureBase, AdventureList, AdventureResponse
+from sqlalchemy.orm import joinedload
+
+logger = logging.getLogger("uvicorn.error")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+Base.metadata.create_all(bind=engine)
+
+
+
 
 def get_extension(language: str) -> str:
     mapping = {
@@ -249,3 +267,78 @@ def get_problem_by_access_code(access_code: str, db: Session = Depends(get_db)):
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
     return problem
+
+
+
+@app.post("/adventures")
+def create_adventure(
+    payload: AdventureCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+   
+    problems_json = jsonable_encoder(payload.problems)
+    graph_data_json = jsonable_encoder(payload.graph_data)
+
+    adv = Adventure(
+        name=payload.title,
+        description=payload.description,
+        problems=problems_json,        
+        graph_data=graph_data_json, 
+        creator_id=current_user.id,
+    )
+    
+    db.add(adv)
+    db.commit()
+    db.refresh(adv)
+    return {
+        "id": adv.id,
+        "message": "Adventure created successfully"
+    }
+
+    
+@app.get("/adventures/{adventure_id}", response_model=AdventureResponse)
+def get_adventure(
+    adventure_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    adventure = db.query(Adventure).filter(
+        Adventure.id == adventure_id
+    ).first()
+
+    if not adventure:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Adventure not found"
+        )
+    
+    
+    return {
+        "id": adventure.id,
+        "title": adventure.name,
+        "description": adventure.description,
+        "problems": adventure.problems,
+        "graph_data": adventure.graph_data,
+        "creator_id": adventure.creator_id
+    }
+
+@app.get("/adventures", response_model=list[AdventureList])
+def list_adventures(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    adventures = db.query(Adventure).filter(
+        Adventure.creator_id == current_user.id
+    ).all()
+    
+    return [
+        {
+            "id": adv.id,
+            "title": adv.name,
+            "problems": adv.problems,
+            "description": adv.description,
+            "creator_id": adv.creator_id
+        }
+        for adv in adventures
+    ]
