@@ -6,13 +6,20 @@ import type { ProblemBase } from "../components/shared/types";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 import useAutoSave from "../hooks/useAutosave";
 
-const STORAGE_KEY = "draft:CreateProblem";
+type ProblemDraft = {
+  problem: ProblemBase;
+  isPublic: boolean;
+  userId: string;
+};
 
 const CreateProblem = () => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showTokenExpired, setShowTokenExpired] = useState(false);
   const [shouldBlockSave, setShouldBlockSave] = useState(false); 
+
+  const userId = localStorage.getItem('userId') || 'unknown';
+  const STORAGE_KEY = `draft:CreateProblem:${userId}`;
   
   const [problem, setProblem] = useState<ProblemBase>({
     title: "",
@@ -26,7 +33,6 @@ const CreateProblem = () => {
   const [isPublic, setIsPublic] = useState(true);
   const { submit, loading, error, success } = useCreateProblem();
   
-  
   const handleProblemChange = useCallback((newProblem: ProblemBase) => {
     if (!shouldBlockSave) setProblem(newProblem);
   }, [shouldBlockSave]);
@@ -35,12 +41,13 @@ const CreateProblem = () => {
     if (!shouldBlockSave) setIsPublic(isPublic);
   }, [shouldBlockSave]);
 
+  
   const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, {
     problem,
     isPublic
   }, shouldBlockSave); 
 
-  
+
   useEffect(() => {
     const token = getStoredToken();
     
@@ -56,16 +63,45 @@ const CreateProblem = () => {
     setIsCheckingAuth(false);
   }, [navigate]);
 
-  
+  const resetProblemState = useCallback(() => {
+    setProblem({
+      title: "",
+      description: "",
+      language: "python",
+      code_snippet: "",
+      expected_output: "",
+      difficulty: 3,
+    });
+    setIsPublic(true);
+    setShouldBlockSave(false);
+  }, []);
+
+
   useEffect(() => {
     if (isCheckingAuth) return;
     
-    const draft = loadSavedData();
+    const draft = loadSavedData() as ProblemDraft | null;
+   
+    const currentUserId = localStorage.getItem('userId') || 'unknown';
+    
     if (draft) {
-      setProblem(draft.problem);
-      setIsPublic(draft.isPublic);
+
+      if (draft.userId === currentUserId) {
+        setProblem(draft.problem);
+        setIsPublic(draft.isPublic);
+      } else {
+       
+        clearSavedData();
+        resetProblemState();
+      }
+    } else {
+     
+      resetProblemState();
     }
-  }, [isCheckingAuth, loadSavedData]);
+  }, [isCheckingAuth, loadSavedData, clearSavedData, resetProblemState]);
+
+
+
 
   const handleSubmit = async () => {
     const token = getStoredToken();
@@ -81,6 +117,7 @@ const CreateProblem = () => {
         is_public: isPublic,
       });
     
+      
       setShouldBlockSave(true);
       clearSavedData();
     } catch (error) {
@@ -104,17 +141,9 @@ const CreateProblem = () => {
  
   useEffect(() => {
     if (success) {
-      setProblem({
-        title: "",
-        description: "",
-        language: "python",
-        code_snippet: "",
-        expected_output: "",
-        difficulty: 3,
-      });
-      setIsPublic(true);
+      resetProblemState();
     }
-  }, [success]);
+  }, [success, resetProblemState]);
 
   if (isCheckingAuth) {
     return <div>Checking authentication...</div>;
@@ -138,14 +167,7 @@ const CreateProblem = () => {
           <button 
             onClick={() => {
               setShouldBlockSave(false);
-              setProblem({
-                title: "",
-                description: "",
-                language: "python",
-                code_snippet: "",
-                expected_output: "",
-                difficulty: 3,
-              });
+              resetProblemState();
             }}
             className="button button-primary"
           >

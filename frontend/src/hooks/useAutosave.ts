@@ -8,21 +8,21 @@ const useAutoSave = <T extends object>(
 ) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-
   const saveData = useCallback(() => {
     if (shouldBlockSave) return;
     
- 
-    const isEmpty = Object.values(data).every(
-      value => value === "" || (Array.isArray(value) && value.length === 0)
-    );
     
-    if (!isEmpty) {
-      localStorage.setItem(key, JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
-    }
+    const currentUserId = localStorage.getItem('userId') || 'unknown';
+ 
+    const draftData = {
+      ...data,
+      userId: currentUserId
+    };
+    
+    localStorage.setItem(key, JSON.stringify({
+      data: draftData,
+      timestamp: Date.now()
+    }));
   }, [key, data, shouldBlockSave]);
 
   useEffect(() => {
@@ -35,25 +35,18 @@ const useAutoSave = <T extends object>(
     };
   }, [saveData, throttle, shouldBlockSave]);
   
-
-  const loadSavedData = useCallback((): T | null => {
+  const loadSavedData = useCallback((): (T & { userId: string }) | null => {
     const saved = localStorage.getItem(key);
     if (!saved) return null;
     
     try {
       const parsed = JSON.parse(saved);
-     
-      if (Date.now() - parsed.timestamp > 7 * 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(key);
-        return null;
-      }
       return parsed.data;
     } catch {
       return null;
     }
   }, [key]);
 
- 
   const clearSavedData = useCallback(() => {
     localStorage.removeItem(key);
   }, [key]);

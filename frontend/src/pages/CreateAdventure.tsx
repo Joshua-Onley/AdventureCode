@@ -22,6 +22,30 @@ import { createAdventure } from "../api/adventure";
 import useAutoSave from "../hooks/useAutosave";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 
+import type { Node, Edge } from "reactflow";
+
+interface NodeData {
+  id: number;
+  title: string;
+  description: string;
+  language: string;
+  code_snippet: string;
+  expected_output: string;
+  difficulty: number;
+}
+
+interface EdgeData {
+  condition: string;
+}
+
+type AdventureDraft = {
+  adventureTitle: string;
+  adventureDescription: string;
+  nodes: Node<NodeData>[];
+  edges: Edge<EdgeData>[];
+  userId: string;
+};
+
 const nodeTypes = {
   problemNode: ProblemNode,
 };
@@ -29,8 +53,6 @@ const nodeTypes = {
 const edgeTypes = {
   custom: CustomEdge,
 };
-
-const STORAGE_KEY = "draft:CreateAdventure";
 
 const CreateAdventure = () => {
   const navigate = useNavigate();
@@ -40,7 +62,10 @@ const CreateAdventure = () => {
   const [adventureTitle, setAdventureTitle] = useState("");
   const [adventureDescription, setAdventureDescription] = useState("");
   const [message, setMessage] = useState("");
-  
+
+  const userId = localStorage.getItem('userId') || 'unknown';
+  const STORAGE_KEY = `draft:CreateAdventure:${userId}`;
+
   const {
     nodes,
     edges,
@@ -86,6 +111,7 @@ const CreateAdventure = () => {
     setSelectedEdge(null);
   }, [edges, selectedEdge, setEdges, setSelectedEdge]);
 
+ 
   const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, {
     adventureTitle,
     adventureDescription,
@@ -93,7 +119,6 @@ const CreateAdventure = () => {
     edges
   }, shouldBlockSave); 
 
-  
   useEffect(() => {
     const token = getStoredToken();
     
@@ -105,17 +130,41 @@ const CreateAdventure = () => {
     setIsCheckingAuth(false);
   }, [navigate]);
 
+  const resetAdventureState = useCallback(() => {
+    setAdventureTitle("");
+    setAdventureDescription("");
+    setNodes([]);
+    setEdges([]);
+    setMessage("");
+    setShouldBlockSave(false);
+  }, [setNodes, setEdges]);
+
   useEffect(() => {
     if (isCheckingAuth) return;
     
-    const draft = loadSavedData();
+    const draft = loadSavedData() as AdventureDraft | null;
+    const currentUserId = localStorage.getItem('userId') || 'unknown';
+    
     if (draft) {
-      setAdventureTitle(draft.adventureTitle);
-      setAdventureDescription(draft.adventureDescription);
-      setNodes(draft.nodes || []);
-      setEdges(draft.edges || []);
+      
+      if (draft.userId === currentUserId) {
+        setAdventureTitle(draft.adventureTitle);
+        setAdventureDescription(draft.adventureDescription);
+        setNodes(draft.nodes || []);
+        setEdges(draft.edges || []);
+      } else {
+       
+        clearSavedData();
+        resetAdventureState();
+      }
+    } else {
+      
+      resetAdventureState();
     }
-  }, [isCheckingAuth, loadSavedData, setNodes, setEdges]); 
+  }, [isCheckingAuth, loadSavedData, setNodes, setEdges, clearSavedData, resetAdventureState]); 
+
+  
+  
 
   const handleSaveAdventure = async () => {
     const token = getStoredToken();

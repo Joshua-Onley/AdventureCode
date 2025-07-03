@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface ValidationErrorDetail {
   msg: string;
@@ -38,6 +39,8 @@ export default function Login() {
 
   const [message, setMessage] = useState("");
 
+  const navigate = useNavigate();
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -66,8 +69,12 @@ export default function Login() {
       }
 
       localStorage.setItem("token", res.data.access_token);
+      localStorage.setItem("userId", res.data.user.id.toString())
       setMessage("Login successful");
       console.log("User data:", res.data.user);
+      navigate('/')
+
+
     } catch (err) {
       const error = err as AxiosError<unknown>;
       const errorData = error.response?.data;
