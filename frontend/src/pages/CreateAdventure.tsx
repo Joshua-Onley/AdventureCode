@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ReactFlow, {
   Controls,
   Background,
@@ -19,6 +19,8 @@ import { useAdventureGraph } from "../hooks/useAdventureGraph";
 import { useProblemForm } from "../hooks/useProblemForm";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { createAdventure } from "../api/adventure";
+import useAutoSave from "../hooks/useAutosave";
+import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 
 const nodeTypes = {
   problemNode: ProblemNode,
@@ -28,9 +30,13 @@ const edgeTypes = {
   custom: CustomEdge,
 };
 
+const STORAGE_KEY = "draft:CreateAdventure";
+
 const CreateAdventure = () => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showTokenExpired, setShowTokenExpired] = useState(false);
+  const [shouldBlockSave, setShouldBlockSave] = useState(false); 
   const [adventureTitle, setAdventureTitle] = useState("");
   const [adventureDescription, setAdventureDescription] = useState("");
   const [message, setMessage] = useState("");
@@ -61,7 +67,15 @@ const CreateAdventure = () => {
 
   useKeyboardShortcuts(selectedEdge, deleteSelectedEdge);
 
-  const handleEdgeConditionChange = (condition: string) => {
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!shouldBlockSave) setAdventureTitle(e.target.value);
+  }, [shouldBlockSave]);
+  
+  const handleDescChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!shouldBlockSave) setAdventureDescription(e.target.value);
+  }, [shouldBlockSave]);
+ 
+  const handleEdgeConditionChange = useCallback((condition: string) => {
     if (!selectedEdge) return;
 
     setEdges(edges.map(edge => 
@@ -70,9 +84,47 @@ const CreateAdventure = () => {
         : edge
     ));
     setSelectedEdge(null);
-  };
+  }, [edges, selectedEdge, setEdges, setSelectedEdge]);
+
+  const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, {
+    adventureTitle,
+    adventureDescription,
+    nodes,
+    edges
+  }, shouldBlockSave); 
+
+  
+  useEffect(() => {
+    const token = getStoredToken();
+    
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    
+    setIsCheckingAuth(false);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (isCheckingAuth) return;
+    
+    const draft = loadSavedData();
+    if (draft) {
+      setAdventureTitle(draft.adventureTitle);
+      setAdventureDescription(draft.adventureDescription);
+      setNodes(draft.nodes || []);
+      setEdges(draft.edges || []);
+    }
+  }, [isCheckingAuth, loadSavedData, setNodes, setEdges]); 
 
   const handleSaveAdventure = async () => {
+    const token = getStoredToken();
+    
+    if (!token || isTokenExpired(token)) {
+      setShowTokenExpired(true);
+      return;
+    }
+    
     if (!adventureTitle.trim()) {
       setMessage("Adventure title is required");
       return;
@@ -110,10 +162,10 @@ const CreateAdventure = () => {
       await createAdventure(adventureData);
       
       setMessage("Adventure created successfully!");
+      setShouldBlockSave(true); 
+      clearSavedData();
+      
       setTimeout(() => {
-        setAdventureTitle("");
-        setAdventureDescription("");
-        clearGraph();
         setMessage("");
       }, 2000);
     } catch (error) {
@@ -135,21 +187,7 @@ const CreateAdventure = () => {
       }
     };
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          navigate('/login', { replace: true });
-        } else {
-          setIsCheckingAuth(false);
-        }
-      }, [navigate]);
-    
-      if (isCheckingAuth) {
-        return <div>Checking authentication...</div>;
-      }
-
-  const handleAddProblemToCanvas = () => {
+  const handleAddProblemToCanvas = useCallback(() => {
     if (!newProblem.title.trim() || !newProblem.code_snippet.trim()) {
       setMessage("Title and code snippet are required");
       return;
@@ -159,10 +197,42 @@ const CreateAdventure = () => {
     setNodes([...nodes, newNode]);
     resetForm();
     setMessage("Problem added to canvas!");
-  };
+  }, [newProblem, nodes, createNewNode, setNodes, resetForm]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!shouldBlockSave && (adventureTitle || nodes.length > 0 || edges.length > 0)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [adventureTitle, nodes, edges, shouldBlockSave]);
+
+  const startNewAdventure = useCallback(() => {
+    setShouldBlockSave(false);
+    setAdventureTitle("");
+    setAdventureDescription("");
+    clearGraph();
+    setMessage("");
+  }, [clearGraph]);
+
+  if (isCheckingAuth) {
+    return <div>Checking authentication...</div>;
+  }
 
   return (
     <div className="create-adventure-container">
+      {showTokenExpired && (
+        <div className="token-expired-banner">
+          <p>Your session has expired. Please re-authenticate.</p>
+          <button onClick={() => navigate('/login')}>Login Now</button>
+          <p>Your progress will be saved automatically.</p>
+        </div>
+      )}
+      
       <h2 className="text-2xl font-bold mb-4">Create Learning Adventure</h2>
 
       <div className="adventure-metadata">
@@ -170,14 +240,16 @@ const CreateAdventure = () => {
           type="text"
           placeholder="Adventure Title"
           value={adventureTitle}
-          onChange={(e) => setAdventureTitle(e.target.value)}
+          onChange={handleTitleChange}
           required
+          disabled={shouldBlockSave}
         />
         <textarea
           placeholder="Description"
           value={adventureDescription}
-          onChange={(e) => setAdventureDescription(e.target.value)}
+          onChange={handleDescChange}
           rows={2}
+          disabled={shouldBlockSave}
         />
       </div>
 
@@ -199,6 +271,7 @@ const CreateAdventure = () => {
             <button
               onClick={() => setShowProblemForm(true)}
               className="button button-primary"
+              disabled={shouldBlockSave}
             >
               Create First Problem
             </button>
@@ -237,6 +310,7 @@ const CreateAdventure = () => {
           <button
             onClick={() => setShowProblemForm(!showProblemForm)}
             className="button button-primary"
+            disabled={shouldBlockSave}
           >
             {showProblemForm ? "Hide Problem Form" : "Create New Problem"}
           </button>
@@ -246,15 +320,16 @@ const CreateAdventure = () => {
               setMessage("");
             }}
             className="button button-secondary"
+            disabled={shouldBlockSave}
           >
             Clear Canvas
           </button>
         </div>
         <button
-          onClick={handleSaveAdventure}
+          onClick={shouldBlockSave ? startNewAdventure : handleSaveAdventure}
           className="button button-primary"
         >
-          Save Adventure
+          {shouldBlockSave ? "Create New Adventure" : "Save Adventure"}
         </button>
       </div>
 
@@ -263,6 +338,9 @@ const CreateAdventure = () => {
           message.includes("success") ? "message-success" : "message-error"
         }`}>
           {message}
+          {message.includes("success") && (
+            <p className="mt-2">Your adventure was saved successfully!</p>
+          )}
         </div>
       )}
 
