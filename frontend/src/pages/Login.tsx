@@ -33,7 +33,7 @@ const isValidationErrorResponse = (data: unknown): data is ValidationErrorRespon
 export default function Login() {
   
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
@@ -49,7 +49,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const params = new URLSearchParams();
-      params.append("username", formData.email);
+      params.append("username", formData.username);
       params.append("password", formData.password);
       params.append("grant_type", "password");
 
@@ -100,10 +100,10 @@ export default function Login() {
     <form onSubmit={handleSubmit}>
       <h2>Log In</h2>
       <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
+        type="text"
+        name="username"
+        placeholder="Username"
+        value={formData.username}
         onChange={handleChange}
         required
       />

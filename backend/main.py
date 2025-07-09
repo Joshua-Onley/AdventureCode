@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, Form, Security, Request
 from fastapi.responses import JSONResponse
 import logging
 import traceback
-
+import schemas
 
 app = FastAPI()
 
@@ -33,24 +33,28 @@ async def all_exception_handler(request: Request, exc: Exception):
 from jose import JWTError
 from sqlalchemy.orm import Session
 from database import engine, get_db
-from models import Base, User, Problem, Adventure
+import models
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from auth import hash_password, verify_password, create_access_token, decode_access_token
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import uuid
-from pydantic import BaseModel
-import httpx
-from fastapi.encoders import jsonable_encoder  
-from schemas import AdventureCreate, AdventureBase, AdventureList, AdventureResponse
+import httpx 
 from sqlalchemy.orm import joinedload
+
+from schemas import (
+    AdventureCreate, 
+    Adventure, 
+    AdventureSummary, 
+    AdventureProgress,
+    AdventureApprove,
+    AdventureAttempt,
+    NodeStatus
+)
 
 logger = logging.getLogger("uvicorn.error")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-Base.metadata.create_all(bind=engine)
-
-
-
+models.Base.metadata.create_all(bind=engine)
 
 def get_extension(language: str) -> str:
     mapping = {
@@ -75,10 +79,10 @@ def get_extension(language: str) -> str:
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
-        email = decode_access_token(token)
-        if email is None:
+        username = decode_access_token(token)
+        if username is None:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
-        user = db.query(User).filter(User.email == email).first()
+        user = db.query(models.User).filter(models.User.username == username).first()
         print(f"{user}")
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -89,7 +93,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 def generate_access_code(db: Session) -> str:
     while True:
         code = uuid.uuid4().hex[:6]
-        if not db.query(Problem).filter(Problem.access_code == code).first():
+        if not db.query(models.Problem).filter(models.Problem.access_code == code).first():
             return code
 
 
@@ -100,40 +104,40 @@ async def read_root():
 @app.post("/signup")
 async def signup(
     name: str = Form(...),
-    email: str = Form(...),
+    username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    if db.query(models.User).filter(models.User.username == username).first():
+        raise HTTPException(status_code=400, detail="Username already registered")
     hashed_pw = hash_password(password)
-    user = User(name=name, email=email, password=hashed_pw)
+    user = models.User(name=name, username=username, password_hash=hashed_pw)
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"msg": "Account created", "user": {"id": user.id, "email": user.email}}
+    return {"msg": "Account created", "user": {"id": user.id, "username": user.username}}
 
 @app.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
+    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": user.username})
     print(f"Generated token: {access_token}") 
-    return {"access_token": access_token, "token_type": "bearer", "user": {"id": user.id, "email": user.email}}
+    return {"access_token": access_token, "token_type": "bearer", "user": {"id": user.id, "username": user.username}}
 
 @app.get("/me")
-async def read_users_me(current_user: User = Depends(get_current_user)):
+async def read_users_me(current_user: models.User = Depends(get_current_user)):
     return {
         "id": current_user.id,
-        "email": current_user.email,
+        "username": current_user.username,
         "name": current_user.name
     }
 
 
 @app.get("/users")
 async def list_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
+    users = db.query(models.User).all()
     return {"users": users}
 
 @app.get("/health")
@@ -150,11 +154,11 @@ async def create_problem(
     language: str = Form(...),
     is_public: bool = Form(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user)
 ):
     access_code = generate_access_code(db)
 
-    new_problem = Problem(
+    new_problem = models.Problem(
         access_code=access_code,
         title=title,
         description=description,
@@ -176,10 +180,6 @@ async def create_problem(
     }
 
 PISTON_URL = "https://emkc.org/api/v2/piston/execute"
-
-class Submission(BaseModel):
-    access_code: str
-    submitted_code: str
 
 version_map = {
     "python": "3.10.0",       
@@ -208,7 +208,7 @@ async def submit_solution(
 ):
     try:
         
-        problem = db.query(Problem).filter(Problem.access_code == access_code.lower()).first()
+        problem = db.query(models.Problem).filter(models.Problem.access_code == access_code.lower()).first()
         if not problem:
             return JSONResponse(status_code=404, content={"error": "Problem not found"})
 
@@ -229,7 +229,7 @@ async def submit_solution(
 
       
         async with httpx.AsyncClient() as client:
-            response = await client.post("https://emkc.org/api/v2/piston/execute", json=payload)
+            response = await client.post(PISTON_URL, json=payload)
 
         if response.status_code != 200:
             return JSONResponse(status_code=500, content={"error": "Piston API failed", "details": response.text})
@@ -263,82 +263,194 @@ async def submit_solution(
     
 @app.get("/problems/access/{access_code}")
 def get_problem_by_access_code(access_code: str, db: Session = Depends(get_db)):
-    problem = db.query(Problem).filter(Problem.access_code == access_code).first()
+    problem = db.query(models.Problem).filter(models.Problem.access_code == access_code).first()
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
     return problem
 
 
 
-@app.post("/adventures")
-def create_adventure(
-    payload: AdventureCreate,
+@app.post("/adventures/", response_model=Adventure)
+async def create_adventure(
+    adventure: AdventureCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user)
 ):
-   
-    problems_json = jsonable_encoder(payload.problems)
-    graph_data_json = jsonable_encoder(payload.graph_data)
+  
+    nodes = []
+    for node in adventure.graph_data.nodes:
+        node_id = str(node.id) if isinstance(node.id, uuid.UUID) else node.id
+        nodes.append({
+            "id": node_id,
+            "position": node.position,
+            "data": node.data.dict(),
+            "type": node.type
+        })
+    
+    edges = []
+    for edge in adventure.graph_data.edges:
+        edge_id = str(edge.id) if isinstance(edge.id, uuid.UUID) else edge.id
+        source = str(edge.source) if isinstance(edge.source, uuid.UUID) else edge.source
+        target = str(edge.target) if isinstance(edge.target, uuid.UUID) else edge.target
+        edges.append({
+            "id": edge_id,
+            "source": source,
+            "target": target,
+            "data": edge.data,
+            "type": edge.type
+        })
+    
 
-    adv = Adventure(
-        name=payload.title,
-        description=payload.description,
-        problems=problems_json,        
-        graph_data=graph_data_json, 
+    start_node = None
+    for node in nodes:
+        if not any(edge["target"] == node["id"] for edge in edges):
+            start_node = node
+            break
+    
+   
+    end_node = None
+    for node in nodes:
+        if not any(edge["source"] == node["id"] for edge in edges):
+            end_node = node
+            break
+    
+    if not start_node or not end_node:
+        raise HTTPException(
+            status_code=400,
+            detail="Adventure must have a clear start and end node"
+        )
+
+   
+    approval_status = "draft"
+    approval_requested_at = None
+    if adventure.request_public:
+        approval_status = "pending"
+        approval_requested_at = datetime.utcnow()
+
+    db_adventure = models.Adventure(
+        name=adventure.name,
+        description=adventure.description,
+        problems=[problem.dict() for problem in adventure.problems],
+        graph_data={
+            "nodes": nodes,
+            "edges": edges
+        },
         creator_id=current_user.id,
+        is_public=False,
+        approval_status=approval_status,
+        approval_requested_at=approval_requested_at,
+        start_node_id=start_node["id"],
+        end_node_id=end_node["id"],
+        total_attempts=0,
+        total_completions=0
     )
     
-    db.add(adv)
+    db.add(db_adventure)
     db.commit()
-    db.refresh(adv)
-    return {
-        "id": adv.id,
-        "message": "Adventure created successfully"
-    }
+    db.refresh(db_adventure)
+    return db_adventure
 
-    
-@app.get("/adventures/{adventure_id}", response_model=AdventureResponse)
-def get_adventure(
+
+@app.post("/adventures/{adventure_id}/attempt", response_model=AdventureAttempt)
+async def start_adventure_attempt(
     adventure_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user)
 ):
-    adventure = db.query(Adventure).filter(
-        Adventure.id == adventure_id
-    ).first()
-
+    adventure = db.query(Adventure).filter(Adventure.id == adventure_id).first()
     if not adventure:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Adventure not found"
-        )
+        raise HTTPException(status_code=404, detail="Adventure not found")
     
-    
-    return {
-        "id": adventure.id,
-        "title": adventure.name,
-        "description": adventure.description,
-        "problems": adventure.problems,
-        "graph_data": adventure.graph_data,
-        "creator_id": adventure.creator_id
-    }
 
-@app.get("/adventures", response_model=list[AdventureList])
-def list_adventures(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
-):
-    adventures = db.query(Adventure).filter(
-        Adventure.creator_id == current_user.id
-    ).all()
+    attempt = AdventureAttempt(
+        adventure_id=adventure_id,
+        user_id=current_user.id,
+        start_node_id=adventure.start_node_id,
+        current_node_id=adventure.start_node_id,
+        path_taken=[{
+            "node_id": adventure.start_node_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": NodeStatus.started.value
+        }],
+        start_time=datetime.utcnow(),
+        completed=False
+    )
     
-    return [
-        {
-            "id": adv.id,
-            "title": adv.name,
-            "problems": adv.problems,
-            "description": adv.description,
-            "creator_id": adv.creator_id
-        }
-        for adv in adventures
-    ]
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    
+
+    adventure.total_attempts = (adventure.total_attempts or 0) + 1
+    db.commit()
+    
+    return attempt
+
+@app.get("/adventures/", response_model=list[AdventureSummary])
+async def list_user_adventures(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    adventures = db.query(models.Adventure).filter(models.Adventure.creator_id == current_user.id).all()
+    return adventures
+
+@app.get("/adventures/{adventure_id}")
+def view_adventure(adventure_id: int, db: Session = Depends(get_db)):
+    adventure = db.query(models.Adventure).filter(models.Adventure.id == adventure_id).first()
+    if adventure is None:
+        raise HTTPException(status_code=404, detail="Adventure not found")
+    
+    return adventure
+
+
+
+@app.patch("/attempts/{attempt_id}/progress", response_model=AdventureAttempt)
+async def update_attempt_progress(
+    attempt_id: int,
+    progress: AdventureProgress,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    attempt = db.query(AdventureAttempt).filter(
+        AdventureAttempt.id == attempt_id,
+        AdventureAttempt.user_id == current_user.id
+    ).first()
+    
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+    
+
+    new_entry = {
+        "node_id": str(progress.current_node_id),
+        "outcome": progress.outcome.value,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    
+    if not attempt.path_taken:
+        attempt.path_taken = []
+    
+    attempt.path_taken.append(new_entry)
+    attempt.current_node_id = str(progress.current_node_id)
+    
+
+    adventure = db.query(Adventure).filter(Adventure.id == attempt.adventure_id).first()
+    if progress.current_node_id == uuid.UUID(adventure.end_node_id):
+        attempt.completed = True
+        attempt.end_time = datetime.utcnow()
+        attempt.duration = attempt.end_time - attempt.start_time
+        
+      
+        adventure.total_completions = (adventure.total_completions or 0) + 1
+        
+       
+        if not adventure.best_completion_time or attempt.duration < adventure.best_completion_time:
+            adventure.best_completion_time = attempt.duration
+        
+      
+        total_seconds = (adventure.avg_completion_time or timedelta(0)).total_seconds() * (adventure.total_completions - 1)
+        total_seconds += attempt.duration.total_seconds()
+        adventure.avg_completion_time = timedelta(seconds=total_seconds / adventure.total_completions)
+    
+    db.commit()
+    return attempt

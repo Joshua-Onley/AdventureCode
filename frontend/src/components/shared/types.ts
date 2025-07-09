@@ -30,11 +30,20 @@ export interface ProblemBase {
 
   export interface Adventure {
     id: number;
-    title: string;
+    name: string;
     description: string;
     creator_id: number;
     problems: Problem[];
     graph_data: GraphData;
+  }
+
+  export interface AdventureCreate {
+    name: string;              
+    description?: string;
+    problems: ProblemBase[];   
+    graph_data: GraphData;
+    is_public?: boolean;
+    request_public?: boolean;
   }
   
   export interface Problem {
@@ -47,23 +56,27 @@ export interface ProblemBase {
     difficulty: number;
   }
   
-  export interface NodePosition {
+  export interface NodeData {
     id: string;
     position: {
       x: number;
       y: number;
     };
+    data: ProblemBase;
+    type?: string;
   }
   
-  export interface EdgeDef {
+  export interface EdgeData {
+    id: string;
     source: string;
     target: string;
-    condition: string;
+    data: { condition: string };
+    type?: string
   }
   
   export interface GraphData {
-    nodes: NodePosition[];
-    edges: EdgeDef[];
+    nodes: NodeData[];
+    edges: EdgeData[];
   }
   
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface UserData {
   id: number;
-  email: string;
+  username: string;
   name: string;
 }
 
@@ -46,7 +46,7 @@ const Me: React.FC = () => {
 
         const data = await response.json();
         
-        if (data.id && data.email) {
+        if (data.id && data.username) {
           setUser(data);
         } else {
           throw new Error('Invalid user data structure');
@@ -72,11 +72,11 @@ const Me: React.FC = () => {
   return user ? (
     <div>
       <h2>
-        Welcome, {user.name || user.email || 'Guest'}
+        Welcome, {user.name || user.username || 'Guest'}
       </h2>
       <div>
         <p>User ID: {user.id}</p>
-        <p>Email: {user.email}</p>
+        <p>Username: {user.username}</p>
       </div>
     </div>
   ) : (

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Position, type Node } from "reactflow";
+import { v4 as uuidv4 } from "uuid";
 import type { ProblemBase } from "../components/shared/types";
+
 
 export const useProblemForm = () => {
   const [showProblemForm, setShowProblemForm] = useState(false);
@@ -14,23 +16,22 @@ export const useProblemForm = () => {
   });
 
   const createNewNode = (nodes: Node[], problem: ProblemBase) => {
-    const problemId = `node-${Date.now()}`;
+        const nodeId = uuidv4();                      
     
-    return {
-      id: problemId,
-      type: "problemNode",
-      position: { 
-        x: 100 + nodes.length * 100, 
-        y: 100 + nodes.length * 50 
-      },
-      data: {
-        ...problem,
-        id: problemId,
-      },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
-    } as Node;
-  };
+        return {
+          id: nodeId,
+          type: "problemNode",
+          position: {
+            x: 100 + nodes.length * 100,
+            y: 100 + nodes.length * 50,
+          },
+          data: {
+            ...problem,                              
+          },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+        } as Node & { data: ProblemBase };          
+      };
 
   const resetForm = () => {
     setNewProblem({

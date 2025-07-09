@@ -9,7 +9,7 @@ const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 export default function Signup() {
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    username: "",
     password: "",
   });
 
@@ -49,9 +49,9 @@ export default function Signup() {
         required
       />
       <input
-        type="email"
-        name="email"
-        placeholder="Email"
+        type="text"
+        name="username"
+        placeholder="Username"
         onChange={handleChange}
         required
       />

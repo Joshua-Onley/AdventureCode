@@ -24,25 +24,18 @@ import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 
 import type { Node, Edge } from "reactflow";
 
-interface NodeData {
-  id: number;
-  title: string;
-  description: string;
-  language: string;
-  code_snippet: string;
-  expected_output: string;
-  difficulty: number;
-}
-
-interface EdgeData {
-  condition: string;
-}
+import type {
+  AdventureCreate,
+  NodeData as SharedNodeData,
+  EdgeData as SharedEdgeData,
+  ProblemBase,
+  } from "../components/shared/types";
 
 type AdventureDraft = {
   adventureTitle: string;
   adventureDescription: string;
-  nodes: Node<NodeData>[];
-  edges: Edge<EdgeData>[];
+  nodes: Node<SharedNodeData>[];
+  edges: Edge<SharedEdgeData>[];
   userId: string;
 };
 
@@ -191,24 +184,32 @@ const CreateAdventure = () => {
     }
 
     try {
-      const adventureData = {
-        title: adventureTitle,
-        description: adventureDescription,
-        problems: nodes.map(node => node.data),
-        graph_data: {
-          nodes: nodes.map(node => ({
-            id: node.id,
-            position: node.position,
-          })),
-          edges: edges.map(edge => ({
-            source: edge.source,
-            target: edge.target,
-            condition: edge.data?.condition || "default",
-          })),
-        },
-      };
+      const payload: AdventureCreate = {
+              name: adventureTitle,
+              description: adventureDescription,
+              problems: nodes.map((n) => n.data as ProblemBase),
+              graph_data: {
+                nodes: nodes.map<SharedNodeData>((n) => ({
+                  id: n.id,
+                  position: n.position,
+                  data: n.data as ProblemBase,
+                  type: n.type,
+                })),
+                edges: edges.map<SharedEdgeData>((e) => ({
+                  id: e.id!,
+                  source: e.source,
+                  target: e.target,
+                  data: { condition: e.data.condition },
+                  type: e.type,
+                })),
+              },
+              is_public: false,
+              request_public: false,
+            };
+        
+            await createAdventure(payload);
 
-      await createAdventure(adventureData);
+      
       
       setMessage("Adventure created successfully!");
       setShouldBlockSave(true); 
