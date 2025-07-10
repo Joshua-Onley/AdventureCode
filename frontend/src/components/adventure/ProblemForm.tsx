@@ -17,9 +17,6 @@ const ProblemForm = ({ problem, onChange, onSubmit, onCancel }: ProblemFormProps
     onChange({ ...problem, [name]: value });
   };
 
-  const handleDifficultyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...problem, difficulty: parseInt(e.target.value) });
-  };
 
   return (
     <div className="problem-form">
@@ -70,13 +67,6 @@ const ProblemForm = ({ problem, onChange, onSubmit, onCancel }: ProblemFormProps
           <label>
             Difficulty: {problem.difficulty}
           </label>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={problem.difficulty}
-            onChange={handleDifficultyChange}
-          />
           <div className="difficulty-labels">
             <span>Easy</span>
             <span>Medium</span>

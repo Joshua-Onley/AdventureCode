@@ -6,6 +6,27 @@ import {
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
+interface Adventure {
+  id: number;
+  name: string;
+  description: string;
+  creator_id: number;
+  created_at: string;
+  is_public: boolean;
+  approval_status: string;
+  total_attempts: number;
+  total_completions: number;
+  access_code: string | null;
+  start_node_id: string;
+  end_node_id: string;
+}
+
+
+interface PublicAdventuresResponse {
+  adventures: Adventure[];
+}
+
+
 
    export const createAdventure = async (
     adventureData: AdventureCreate    
@@ -83,9 +104,10 @@ export const getAdventure = async (id: number) => {
   return response.data;
 };
 
-export const getPublicAdventures = async () => {
-  const response = await axios.get(`${FASTAPI_BACKEND_URL}/adventures/public`);
-  return response.data;
+export const getPublicAdventures = async (): Promise<Adventure[]> => {
+  const response = await axios.get<PublicAdventuresResponse>(`${FASTAPI_BACKEND_URL}/adventures/public`);
+  console.log("fetching public adventures from adventure.ts file", response);
+  return response.data.adventures;
 };
 
 export const getUserAdventures = async (userId: number) => {

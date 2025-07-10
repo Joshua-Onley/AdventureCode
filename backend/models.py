@@ -46,6 +46,12 @@ class User(Base):
         back_populates="approved",
         foreign_keys="[Adventure.approved_by]"
     )
+
+    problems_approved = relationship(
+        "Problem",
+        back_populates="approved",
+        foreign_keys="[Problem.approved_by]"
+    )
     
     problems = relationship(
         "Problem",
@@ -64,7 +70,15 @@ class Problem(Base):
     code_snippet = Column(Text, nullable=False) 
     expected_output = Column(Text, nullable=False)  
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+
     is_public = Column(Boolean, default=False)
+
+    approval_status = Column(String(20), default="draft") 
+    approval_requested_at = Column(DateTime, nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+
+    approved_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     language = Column(String, nullable=False)
 
@@ -73,6 +87,12 @@ class Problem(Base):
         back_populates="problems",
         foreign_keys=[creator_id],    
     )
+
+    approved  = relationship(
+        "User",
+        foreign_keys=[approved_by],
+        back_populates="problems_approved"
+       )
 
 
 class Adventure(Base):

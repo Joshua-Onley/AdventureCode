@@ -9,7 +9,6 @@ interface ProblemData {
   language: string;
   code_snippet: string;
   expected_output: string;
-  difficulty: number;
 }
 
 interface GraphEdge {
@@ -18,16 +17,17 @@ interface GraphEdge {
   condition: string;
 }
 
+
 interface GraphNode {
   id: string;
   position: { x: number; y: number };
+  data: ProblemData; 
 }
 
 interface AdventureDetailResponse {
   id: number;
   title: string;
   description: string;
-  problems: ProblemData[];
   graph_data: {
     nodes: GraphNode[];
     edges: GraphEdge[];
@@ -100,33 +100,30 @@ const AdventureDetail: React.FC = () => {
       <h1>{adventure.title}</h1>
       <p>{adventure.description}</p>
 
-      <h2>Problems in this adventure</h2>
+      <h2>Problems in this Adventure</h2>
       <ol>
-        {adventure.problems.map((problem) => (
-          <li key={problem.id}>
-            <h3>{problem.title}</h3>
-            <p>{problem.description}</p>
+        {adventure.graph_data.nodes.map((node) => (
+          <li key={node.id}>
+            <h3>{node.data.title}</h3>
+            <p>{node.data.description}</p>
             <div>
-              <pre>{problem.code_snippet}</pre>
+              <pre>{node.data.code_snippet}</pre>
             </div>
             <div>
-              <strong>Expected Output:</strong> {problem.expected_output}
+              <strong>Expected Output:</strong> {node.data.expected_output}
             </div>
-            <div>
-              <strong>Difficulty:</strong> {problem.difficulty}/5
-            </div>
+            
           </li>
         ))}
       </ol>
 
       <h2>Graph Structure</h2>
       <div>
-        <pre>
-          {JSON.stringify(adventure.graph_data, null, 2)}
-        </pre>
+        <pre>{JSON.stringify(adventure.graph_data, null, 2)}</pre>
       </div>
     </div>
   );
 };
+
 
 export default AdventureDetail;

@@ -35,6 +35,10 @@ class Problem(ProblemBase):
     access_code: str
     creator_id: int
     created_at: datetime
+    approval_status: str = "draft"
+    approval_requested_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    approved_by: Optional[int] = None
 
     class Config:
         orm_mode = True

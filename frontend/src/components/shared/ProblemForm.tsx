@@ -94,17 +94,6 @@ const ProblemForm: React.FC<ProblemFormProps> = ({
         />
       </div>
 
-      <div className="form-group">
-        <label>Difficulty (1-5)</label>
-        <input
-          type="range"
-          min="1"
-          max="5"
-          value={problem.difficulty}
-          onChange={(e) => handleChange("difficulty", parseInt(e.target.value))}
-        />
-        <span className="difficulty-value">{problem.difficulty}</span>
-      </div>
 
       {showPublicOption && (
         <div className="form-group">
@@ -114,7 +103,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({
               checked={isPublic}
               onChange={(e) => onPublicChange(e.target.checked)}
             />
-            Make this problem public
+            Request to make this problem public
           </label>
         </div>
       )}

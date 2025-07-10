@@ -158,6 +158,8 @@ async def create_problem(
 ):
     access_code = generate_access_code(db)
 
+    
+
     new_problem = models.Problem(
         access_code=access_code,
         title=title,
@@ -166,7 +168,8 @@ async def create_problem(
         expected_output=expected_output,
         language=language,
         is_public=is_public,
-        creator_id=None if is_public else current_user.id
+        creator_id=None if is_public else current_user.id,
+        approval_requested_at=datetime.utcnow() if is_public else None
     )
 
     db.add(new_problem)
@@ -326,11 +329,13 @@ async def create_adventure(
     if adventure.request_public:
         approval_status = "pending"
         approval_requested_at = datetime.utcnow()
+    
+    access_code = uuid.uuid4().hex[:6]
 
     db_adventure = models.Adventure(
         name=adventure.name,
         description=adventure.description,
-        problems=[problem.dict() for problem in adventure.problems],
+        
         graph_data={
             "nodes": nodes,
             "edges": edges
@@ -342,13 +347,46 @@ async def create_adventure(
         start_node_id=start_node["id"],
         end_node_id=end_node["id"],
         total_attempts=0,
-        total_completions=0
+        total_completions=0,
+        access_code=access_code
     )
     
     db.add(db_adventure)
     db.commit()
     db.refresh(db_adventure)
     return db_adventure
+
+@app.get("/adventures/public")
+async def fetch_public_adventures(
+    db: Session = Depends(get_db),
+):
+    public_adventures = db.query(models.Adventure).filter(
+        models.Adventure.is_public == True,
+        models.Adventure.approval_status == "approved"
+    ).all()
+    
+    
+    adventures_json = []
+    for adventure in public_adventures:
+        adventure_dict = {
+            "id": adventure.id,
+            "name": adventure.name,
+            "description": adventure.description,
+            "creator_id": adventure.creator_id,
+            "created_at": adventure.created_at.isoformat() if adventure.created_at else None,
+            "is_public": adventure.is_public,
+            "approval_status": adventure.approval_status,
+            "total_attempts": adventure.total_attempts,
+            "total_completions": adventure.total_completions,
+            "access_code": adventure.access_code,
+            "start_node_id": adventure.start_node_id,
+            "end_node_id": adventure.end_node_id,
+            
+        }
+        adventures_json.append(adventure_dict)
+        print({"adventures": adventures_json})
+    
+    return {"adventures": adventures_json}
 
 
 @app.post("/adventures/{adventure_id}/attempt", response_model=AdventureAttempt)
