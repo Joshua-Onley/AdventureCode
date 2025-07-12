@@ -28,7 +28,7 @@ const MyAdventures = () => {
         }
 
         
-        const response = await axios.get(`${FASTAPI_BACKEND_URL}/adventures`, {
+        const response = await axios.get(`${FASTAPI_BACKEND_URL}/adventures/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

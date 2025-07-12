@@ -16,7 +16,7 @@ const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   
     try {
       const response = await axios.post(
-        `${FASTAPI_BACKEND_URL}/adventures`,
+        `${FASTAPI_BACKEND_URL}/adventures/`,
         adventureData,             
         {
           headers: {
@@ -38,7 +38,7 @@ const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
       } else if (typeof data === "string") {
         throw new Error(data);
       } else {
-        throw new Error("Something went wrong. Try again later.");
+        throw new Error("Something went wrong. Tr again later.");
       }
     }
   };
