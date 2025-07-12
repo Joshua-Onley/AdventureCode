@@ -4,21 +4,6 @@ from typing import List, Optional, Dict, Any
 import uuid
 from enum import Enum
 
-class UserBase(BaseModel):
-    name: str
-    username: str
-    email: Optional[str] = None
-
-class UserCreate(UserBase):
-    password: str
-
-class User(UserBase):
-    id: int
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
-
 class ProblemBase(BaseModel):
     title: str
     description: str
@@ -29,19 +14,6 @@ class ProblemBase(BaseModel):
 
 class ProblemCreate(ProblemBase):
     pass
-
-class Problem(ProblemBase):
-    id: int
-    access_code: str
-    creator_id: int
-    created_at: datetime
-    approval_status: str = "draft"
-    approval_requested_at: Optional[datetime] = None
-    approved_at: Optional[datetime] = None
-    approved_by: Optional[int] = None
-
-    class Config:
-        orm_mode = True
 
 class NodeData(BaseModel):
     id: UUID4
@@ -87,8 +59,6 @@ class Adventure(AdventureBase):
     start_node_id: str
     end_node_id: str
 
-
-
     class Config:
         orm_mode = True
 
@@ -112,23 +82,6 @@ class AdventureAttempt(AdventureAttemptBase):
     class Config:
         orm_mode = True
 
-class AdventureStats(BaseModel):
-    node_id: UUID4
-    attempts: int
-    successes: int
-    avg_time: Optional[timedelta] = None
-
-class AdventureApprove(BaseModel):
-    status: str 
-    reason: Optional[str] = None
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    username: Optional[str] = None
-
 class AdventureSummary(BaseModel):
     id: int
     name: str
@@ -150,3 +103,6 @@ class NodeStatus(str, Enum):
 class AdventureProgress(BaseModel):
     current_node_id: UUID4
     outcome: NodeStatus
+    code: str  
+    completed: bool = False
+

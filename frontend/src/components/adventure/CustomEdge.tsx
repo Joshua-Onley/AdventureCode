@@ -1,6 +1,5 @@
 import { BaseEdge, getSmoothStepPath, type EdgeProps } from "reactflow";
 
-
 const CustomEdge = (props: EdgeProps) => {
   const {
     sourceX,

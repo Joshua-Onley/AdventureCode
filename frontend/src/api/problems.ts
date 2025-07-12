@@ -16,7 +16,7 @@ export interface Problem {
     code_snippet: string;
     language: string;
     expected_output: string;
-     difficulty: number;
+     
   }
 
 export interface SubmissionResponse {

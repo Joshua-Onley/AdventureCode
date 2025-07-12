@@ -1,22 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-
-interface ProblemData {
-  id: string;
-  title: string;
-  description: string;
-  language: string;
-  code_snippet: string;
-  expected_output: string;
-}
+import type { ProblemData } from "../shared/types";
 
 interface GraphEdge {
   source: string;
   target: string;
   condition: string;
 }
-
 
 interface GraphNode {
   id: string;

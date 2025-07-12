@@ -9,9 +9,7 @@ import AttemptProblem from "./pages/AttemptProblem";
 import CreateAdventure from "./pages/CreateAdventure";
 import FetchUserAdventures from "./pages/MyAdventures";
 import AdventureDetail from "./components/adventure/AdventureDetail"
-
-
-
+import AttemptAdventure from "./pages/AttemptAdventure";
 
 const App: React.FC = () => {
   return (
@@ -27,6 +25,7 @@ const App: React.FC = () => {
         <Route path="/create-adventure" element={<CreateAdventure />} />
         <Route path="/my-adventures" element={<FetchUserAdventures />}/>
         <Route path="/adventures/:id" element={<AdventureDetail />} />
+        <Route path="/adventure/:id/attempt" element={<AttemptAdventure />} />
  
       </Routes>
     </Router>

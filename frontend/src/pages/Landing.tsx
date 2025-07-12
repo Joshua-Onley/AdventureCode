@@ -22,6 +22,12 @@ const Landing = () => {
   const [publicAdventures, setPublicAdventures] = useState<Adventure[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const currentUser = localStorage.getItem("userName");
+    setCurrentUsername(currentUser);
+  }, []);
 
   useEffect(() => {
     const fetchPublicAdventures = async () => {
@@ -40,61 +46,60 @@ const Landing = () => {
     fetchPublicAdventures();
   }, []);
 
+  const handleLogout = () => {
+    localStorage.clear(); 
+    navigate('/login'); 
+  };
+
   return (
     <div>
-      <h1>Welcome to the landing page</h1>
+      <h1>
+        Welcome to the landing page
+        {currentUsername && <span>, {currentUsername}!</span>}
+      </h1>
+      <button onClick={handleLogout}>Logout</button>
       
       {loading && <p>Loading adventures...</p>}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
       
       {!loading && !error && (
-  <div>
-    <h2>
-      Public Adventures ({publicAdventures.length})
-    </h2>
-    
-    {publicAdventures.length > 0 ? (
-      <div>
-        {publicAdventures.map((adventure) => (
-          <div 
-            key={adventure.id} 
-        
-          >
-            <h3>
-              {adventure.name}
-            </h3>
-            
+        <div>
+          <h2>
+            Public Adventures ({publicAdventures.length})
+          </h2>
+          {publicAdventures.length > 0 ? (
             <div>
-              <div>
-                <span>Total Attempts:</span>
-                <span>{adventure.total_attempts || "Unknown"}</span>
-              </div>
-              <div>
-                <span>Completions:</span>
-                <span>
-                  {adventure.total_completions}
-                </span>
-              </div>
+              {publicAdventures.map((adventure) => (
+                <div key={adventure.id}>
+                  <h3>{adventure.name}</h3>
+                  <div>
+                    <div>
+                      <span>Total Attempts:</span>
+                      <span>{adventure.total_attempts}</span>
+                    </div>
+                    <div>
+                      <span>Completions:</span>
+                      <span>{adventure.total_completions}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/adventure/${adventure.id}/attempt`)}
+                  >
+                    Start Adventure
+                  </button>
+                </div>
+              ))}
             </div>
-            <button
-              onClick={() => navigate(`/adventure/attempt/${adventure.id}`)}>
-              Start Adventure
-            </button>
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div >
-        <p >No public adventures available yet</p>
-        <button 
-          onClick={() => navigate('/create-adventure')}
-        >
-          Create Your Own Adventure
-        </button>
-      </div>
-    )}
-  </div>
-)}
+          ) : (
+            <div>
+              <p>No public adventures available yet</p>
+              <button onClick={() => navigate('/create-adventure')}>
+                Create Your Own Adventure
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
         <button onClick={() => navigate("/signup")}>Signup</button>
@@ -105,7 +110,6 @@ const Landing = () => {
         <button onClick={() => navigate("/attempt")}>Attempt Problem</button>
         <button onClick={() => navigate("/create-adventure")}>Create an Adventure</button>
         <button onClick={() => navigate("/my-adventures")}>My Adventures</button>
-    
       </div>
     </div>
   );

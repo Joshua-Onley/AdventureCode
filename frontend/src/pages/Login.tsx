@@ -1,15 +1,7 @@
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
-
-interface ValidationErrorDetail {
-  msg: string;
-  [key: string]: unknown;
-}
-
-interface ValidationErrorResponse {
-  detail: ValidationErrorDetail[];
-}
+import type { ValidationErrorResponse } from "../components/shared/types";
 
 interface LoginSuccessResponse {
   access_token: string;
@@ -31,14 +23,11 @@ const isValidationErrorResponse = (data: unknown): data is ValidationErrorRespon
 };
 
 export default function Login() {
-  
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
-
   const [message, setMessage] = useState("");
-
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +43,7 @@ export default function Login() {
       params.append("grant_type", "password");
 
       const res = await axios.post<LoginSuccessResponse>(
-        `${FASTAPI_BACKEND_URL}/login`, 
+        `${FASTAPI_BACKEND_URL}/login`,
         params,
         {
           headers: {
@@ -68,13 +57,15 @@ export default function Login() {
         throw new Error("No access token received");
       }
 
+     
       localStorage.setItem("token", res.data.access_token);
-      localStorage.setItem("userId", res.data.user.id.toString())
+      localStorage.setItem("userId", res.data.user.id.toString());
+      localStorage.setItem("userName", formData.username); 
+    
+
       setMessage("Login successful");
       console.log("User data:", res.data.user);
-      navigate('/')
-
-
+      navigate('/');
     } catch (err) {
       const error = err as AxiosError<unknown>;
       const errorData = error.response?.data;
@@ -91,7 +82,6 @@ export default function Login() {
       } else {
         setMessage("Login failed. Please try again.");
       }
-
       console.error("Login error:", error);
     }
   };

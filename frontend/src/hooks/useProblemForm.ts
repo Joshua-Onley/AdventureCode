@@ -12,7 +12,6 @@ export const useProblemForm = () => {
     language: "python",
     code_snippet: "",
     expected_output: "",
-    difficulty: 3,
   });
 
   const createNewNode = (nodes: Node[], problem: ProblemBase) => {
@@ -40,7 +39,6 @@ export const useProblemForm = () => {
       language: "python",
       code_snippet: "",
       expected_output: "",
-      difficulty: 3,
     });
     setShowProblemForm(false);
   };

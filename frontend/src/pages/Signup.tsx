@@ -1,4 +1,4 @@
-
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 
@@ -14,6 +14,7 @@ export default function Signup() {
   });
 
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,6 +31,7 @@ export default function Signup() {
         }
       );
       setMessage(res.data.msg);
+      navigate("/login")
     } catch (err) {
         const error = err as AxiosError;
         const errorData = error.response?.data as ErrorResponse;
@@ -44,7 +46,7 @@ export default function Signup() {
       <input
         type="text"
         name="name"
-        placeholder="Name"
+        placeholder="Firstname"
         onChange={handleChange}
         required
       />

@@ -1,32 +1,12 @@
 import axios, { AxiosError } from "axios";
-import {
-  isValidationErrorResponse,
-  type AdventureCreate,  
+import type {
+  Adventure,
+  PublicAdventuresResponse,
+  AdventureCreate,  
 } from "../components/shared/types";
+import { isValidationErrorResponse } from "../hooks/useCreateProblem";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
-
-interface Adventure {
-  id: number;
-  name: string;
-  description: string;
-  creator_id: number;
-  created_at: string;
-  is_public: boolean;
-  approval_status: string;
-  total_attempts: number;
-  total_completions: number;
-  access_code: string | null;
-  start_node_id: string;
-  end_node_id: string;
-}
-
-
-interface PublicAdventuresResponse {
-  adventures: Adventure[];
-}
-
-
 
    export const createAdventure = async (
     adventureData: AdventureCreate    

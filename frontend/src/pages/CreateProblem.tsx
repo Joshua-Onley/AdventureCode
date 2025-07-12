@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import ProblemForm from "../components/shared/ProblemForm";
+import ProblemForm from "../components/ProblemForm";
 import { useCreateProblem } from "../hooks/useCreateProblem";
 import type { ProblemBase } from "../components/shared/types";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
@@ -27,7 +27,6 @@ const CreateProblem = () => {
     language: "python",
     code_snippet: "",
     expected_output: "",
-    difficulty: 3,
   });
   
   const [isPublic, setIsPublic] = useState(true);
@@ -70,7 +69,6 @@ const CreateProblem = () => {
       language: "python",
       code_snippet: "",
       expected_output: "",
-      difficulty: 3,
     });
     setIsPublic(true);
     setShouldBlockSave(false);

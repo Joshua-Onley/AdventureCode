@@ -181,6 +181,30 @@ class AdventureAttempt(Base):
         Index('ix_attempt_completion', 'completed', 'end_time'),
     )
 
+    submissions = relationship(
+        "AdventureProblemSubmission",
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+        foreign_keys="AdventureProblemSubmission.attempt_id"
+    )
+
+class AdventureProblemSubmission(Base):
+    __tablename__ = "adventure_problem_submissions"
+    id = Column(Integer, primary_key=True, index=True)
+    attempt_id = Column(Integer, ForeignKey("adventure_attempts.id"), nullable=False)
+    node_id    = Column(String, nullable=False)
+    code_submitted = Column(Text, nullable=False)
+    output         = Column(Text, nullable=False)
+    is_correct     = Column(Boolean, nullable=False)
+    created_at     = Column(DateTime(timezone=True), server_default=func.now())
+
+    attempt = relationship(
+        "AdventureAttempt",
+        back_populates="submissions",
+        foreign_keys=[attempt_id]
+    )
+
+
 class AdventureStats(Base):
     __tablename__ = "adventure_stats"
     id = Column(Integer, primary_key=True, index=True)

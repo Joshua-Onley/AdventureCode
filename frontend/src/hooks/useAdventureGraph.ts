@@ -171,7 +171,7 @@ export const useAdventureGraph = () => {
       return edgeConditionErrors.join("\n");
     }
     
-    // No self-references
+    // No node can connect to itself
     const selfReferencing = edges.filter(edge => edge.source === edge.target);
     if (selfReferencing.length > 0) {
       return `Problems cannot connect to themselves: ${

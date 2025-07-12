@@ -1,10 +1,8 @@
 import { useState } from "react";
 import type { AxiosError } from "axios";
 import { createProblem, type CreateProblemPayload } from "../api/problems";
-
-
-interface ValidationErrorItem { msg: string; [key: string]: unknown }
-interface ValidationErrorResponse { detail: ValidationErrorItem[] }
+import type { ValidationErrorResponse } from '../components/shared/types';
+ 
 
 export function isValidationErrorResponse(data: unknown): data is ValidationErrorResponse {
   return (

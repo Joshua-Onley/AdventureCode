@@ -4,9 +4,7 @@ export interface ProblemBase {
     language: string;
     code_snippet: string;
     expected_output: string;
-    difficulty: number;
   }
-
   
   export interface ValidationErrorItem {
     msg: string;
@@ -15,26 +13,6 @@ export interface ProblemBase {
   
   export interface ValidationErrorResponse {
     detail: ValidationErrorItem[];
-  }
-  
-  export const isValidationErrorResponse = (
-    data: unknown
-  ): data is ValidationErrorResponse => {
-    return (
-      data !== null &&
-      typeof data === "object" &&
-      "detail" in data &&
-      Array.isArray((data as { detail: unknown }).detail)
-    );
-  };
-
-  export interface Adventure {
-    id: number;
-    name: string;
-    description: string;
-    creator_id: number;
-    problems: Problem[];
-    graph_data: GraphData;
   }
 
   export interface AdventureCreate {
@@ -79,24 +57,54 @@ export interface ProblemBase {
     edges: EdgeData[];
   }
   
-
-  export interface FlowNode {
+  export interface ProblemData {
     id: string;
-    type: string;
-    position: { x: number; y: number };
-    data: Problem;
-    sourcePosition: string;
-    targetPosition: string;
+    title: string;
+    description: string;
+    code_snippet: string;
+    expected_output: string;
+    language: string;
   }
-  
- 
-  export interface FlowEdge {
+
+  export interface GraphNode {
+    id: string;
+    position: { x: number; y: number };
+    data: ProblemData;
+    type?: string;
+  }
+
+  export interface GraphEdge {
     id: string;
     source: string;
     target: string;
-    type: string;
     data: { condition: string };
-    animated: boolean;
+    type?: string;
+  }
+
+  export interface AdventureAttempt {
+    id: number;
+    current_node_id: string;
+    path_taken: Array<{ node_id: string; outcome: string; code?: string }>;
+    completed: boolean;
+  }
+
+  export interface Adventure {
+    id: number;
+    name: string;
+    description: string;
+    creator_id: number;
+    created_at: string;
+    is_public: boolean;
+    approval_status: string;
+    total_attempts: number;
+    total_completions: number;
+    access_code: string | null;
+    start_node_id: string;
+    end_node_id: string;
+  }
+  
+  export interface PublicAdventuresResponse {
+    adventures: Adventure[];
   }
   
   export const SUPPORTED_LANGUAGES = [

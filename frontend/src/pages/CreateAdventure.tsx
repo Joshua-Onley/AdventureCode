@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
-import ProblemForm from "../components/shared/ProblemForm"; 
+import ProblemForm from "../components/ProblemForm"; 
 import EdgeSettingsModal from "../components/adventure/EdgeSettingsModal";
 
 import { useAdventureGraph } from "../hooks/useAdventureGraph";
@@ -157,8 +157,6 @@ const CreateAdventure = () => {
   }, [isCheckingAuth, loadSavedData, setNodes, setEdges, clearSavedData, resetAdventureState]); 
 
   
-  
-
   const handleSaveAdventure = async () => {
     const token = getStoredToken();
     

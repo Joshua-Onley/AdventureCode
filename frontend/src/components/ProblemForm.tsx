@@ -1,5 +1,5 @@
 import React from "react";
-import type { ProblemBase } from "./types";
+import type { ProblemBase } from "./shared/types";
 
 interface ProblemFormProps {
   problem: ProblemBase;
