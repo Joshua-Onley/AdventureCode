@@ -106,3 +106,7 @@ class AdventureProgress(BaseModel):
     code: str  
     completed: bool = False
 
+class AdventureUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    graph_data: Optional[GraphData] = None

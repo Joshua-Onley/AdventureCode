@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getPublicAdventures } from "../api/adventure";
+import { MainContent } from "../components/landing/MainContent"
+import { Sidebar } from "../components/landing/Sidebar";
+import { ErrorMessage } from "../components/landing/ErrorMessage";
+import { Header } from "../components/landing/Header"
 
 interface Adventure {
   id: number;
@@ -15,6 +19,8 @@ interface Adventure {
   access_code: string | null;
   start_node_id: string;
   end_node_id: string;
+  fastest_completion_time: number | null; 
+  fastest_completion_user: string | null; 
 }
 
 const Landing = () => {
@@ -23,6 +29,8 @@ const Landing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   useEffect(() => {
     const currentUser = localStorage.getItem("userName");
@@ -34,6 +42,7 @@ const Landing = () => {
       try {
         setLoading(true);
         const adventures = await getPublicAdventures();
+        console.log(adventures)
         setPublicAdventures(adventures);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -47,72 +56,97 @@ const Landing = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear(); 
-    navigate('/login'); 
+    localStorage.clear();
+    navigate('/login');
+  };
+
+  const handleAccessSubmit = () => {
+    if (!accessCode.trim()) {
+      setCodeError("Please enter a 6‑digit code");
+      return;
+    }
+    setCodeError(null);
+    navigate(`/adventures/access/${accessCode}`);
+  };
+
+
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${remainingSeconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    } else {
+      return `${remainingSeconds}s`;
+    }
+  };
+
+  const calculateSuccessRate = (attempts: number, completions: number) => {
+    if (attempts === 0) return 0;
+    return Math.round((completions / attempts) * 100);
   };
 
   return (
-    <div>
-      <h1>
-        Welcome to the landing page
-        {currentUsername && <span>, {currentUsername}!</span>}
-      </h1>
-      <button onClick={handleLogout}>Logout</button>
-      
-      {loading && <p>Loading adventures...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      
-      {!loading && !error && (
-        <div>
-          <h2>
-            Public Adventures ({publicAdventures.length})
-          </h2>
-          {publicAdventures.length > 0 ? (
-            <div>
-              {publicAdventures.map((adventure) => (
-                <div key={adventure.id}>
-                  <h3>{adventure.name}</h3>
-                  <div>
-                    <div>
-                      <span>Total Attempts:</span>
-                      <span>{adventure.total_attempts}</span>
-                    </div>
-                    <div>
-                      <span>Completions:</span>
-                      <span>{adventure.total_completions}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => navigate(`/adventure/${adventure.id}/attempt`)}
-                  >
-                    Start Adventure
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div>
-              <p>No public adventures available yet</p>
-              <button onClick={() => navigate('/create-adventure')}>
-                Create Your Own Adventure
-              </button>
-            </div>
-          )}
+    <div className="flex flex-col h-screen bg-gray-50">
+      <Header currentUsername={currentUsername} handleLogout={handleLogout} />
+
+      <ErrorMessage error={error} />
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-3/4 h-full overflow-y-auto">
+          <MainContent
+            loading={loading}
+            publicAdventures={publicAdventures}
+            calculateSuccessRate={calculateSuccessRate}
+            formatTime={formatTime}
+            formatDate={formatDate}
+          />
         </div>
-      )}
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
-        <button onClick={() => navigate("/signup")}>Signup</button>
-        <button onClick={() => navigate("/login")}>Login</button>
-        <button onClick={() => navigate("/about")}>About</button>
-        <button onClick={() => navigate("/me")}>Me</button>
-        <button onClick={() => navigate("/problems")}>Create Problem</button>
-        <button onClick={() => navigate("/attempt")}>Attempt Problem</button>
-        <button onClick={() => navigate("/create-adventure")}>Create an Adventure</button>
-        <button onClick={() => navigate("/my-adventures")}>My Adventures</button>
+
+        <Sidebar currentUsername={currentUsername}>
+        
+          <>
+          <div className="p-4 bg-white rounded shadow mb-4">
+            <h3 className="font-semibold mb-2">Enter Access Code</h3>
+            <input
+              type="text"
+              maxLength={6}
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              className="w-full p-2 border rounded mb-2"
+              placeholder="e.g. A1B2C3"
+            />
+            {codeError && (
+              <p className="text-red-600 text-sm mb-2">{codeError}</p>
+            )}
+            <button
+              onClick={handleAccessSubmit}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+            >
+              Go
+            </button>
+          </div>
+
+          </>
+        </Sidebar>
       </div>
     </div>
   );
 };
+
+
+  
 
 export default Landing;

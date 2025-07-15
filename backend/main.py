@@ -21,6 +21,7 @@ app = FastAPI()
 
 origins = [
     "https://victorious-bay-07769b703.1.azurestaticapps.net",
+    "https://adventurecode-bcekcrhpauffhzbn.uksouth-01.azurewebsites.net",
     "http://localhost:5173",
     "http://127.0.0.1:8000"  
 ]
@@ -355,15 +356,31 @@ async def fetch_public_adventures(
             "access_code": adventure.access_code,
             "start_node_id": adventure.start_node_id,
             "end_node_id": adventure.end_node_id,
+            "fastest_completion_time": adventure.best_completion_time,
+            "average_completion_time": adventure.avg_completion_time
             
         }
+        print(adventure_dict.values())
         adventures_json.append(adventure_dict)
         print({"adventures": adventures_json})
     
     return {"adventures": adventures_json}
 
+@app.get("/adventures/access/{access_code}")
+def get_adventure_by_code(
+    access_code: str,
+    db: Session = Depends(get_db),
+):
+    adventure = (
+        db.query(models.Adventure)
+          .filter(models.Adventure.access_code == access_code)
+          .first()
+    )
+    if not adventure:
+        raise HTTPException(status_code=404, detail="Adventure not found")
+    return adventure
 
-@app.get("/adventures/", response_model=list[schemas.AdventureSummary])
+@app.get("/adventures/", response_model=list[schemas.Adventure])
 async def list_user_adventures(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -376,6 +393,7 @@ def view_adventure(adventure_id: int, db: Session = Depends(get_db)):
     adventure = db.query(models.Adventure).filter(models.Adventure.id == adventure_id).first()
     if adventure is None:
         raise HTTPException(status_code=404, detail="Adventure not found")
+    
     
     return adventure
 
@@ -515,6 +533,94 @@ async def update_attempt_progress(
     
     db.commit()
     return attempt
+
+@app.put("/adventures/{adventure_id}", response_model=schemas.Adventure)
+async def update_adventure(
+    adventure_id: int,
+    adventure_update: schemas.AdventureUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+   
+    db_adventure = db.query(models.Adventure).filter(
+        models.Adventure.id == adventure_id,
+        models.Adventure.creator_id == current_user.id
+    ).first()
+    
+    if not db_adventure:
+        raise HTTPException(status_code=404, detail="Adventure not found")
+    
+  
+    if adventure_update.name is not None:
+        db_adventure.name = adventure_update.name
+    if adventure_update.description is not None:
+        db_adventure.description = adventure_update.description
+    
+
+    if adventure_update.graph_data is not None:
+        nodes = []
+        for node in adventure_update.graph_data.nodes:
+            node_id = str(node.id) if isinstance(node.id, uuid.UUID) else node.id
+            nodes.append({
+                "id": node_id,
+                "position": node.position,
+                "data": node.data.dict(),
+                "type": node.type
+            })
+        
+        edges = []
+        for edge in adventure_update.graph_data.edges:
+            edge_id = str(edge.id) if isinstance(edge.id, uuid.UUID) else edge.id
+            source = str(edge.source) if isinstance(edge.source, uuid.UUID) else edge.source
+            target = str(edge.target) if isinstance(edge.target, uuid.UUID) else edge.target
+            edges.append({
+                "id": edge_id,
+                "source": source,
+                "target": target,
+                "data": edge.data,
+                "type": edge.type
+            })
+        
+        db_adventure.graph_data = {
+            "nodes": nodes,
+            "edges": edges
+        }
+    
+    db.commit()
+    db.refresh(db_adventure)
+    return db_adventure
+
+@app.delete("/adventures/{adventure_id}")
+async def delete_adventure(
+    adventure_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    adventure = db.query(models.Adventure).filter(
+        models.Adventure.id == adventure_id,
+        models.Adventure.creator_id == current_user.id
+    ).first()
+    
+    if not adventure:
+        raise HTTPException(status_code=404, detail="Adventure not found")
+    
+  
+    db.query(models.AdventureProblemSubmission).filter(
+        models.AdventureProblemSubmission.attempt_id.in_(
+            db.query(models.AdventureAttempt.id).filter(
+                models.AdventureAttempt.adventure_id == adventure_id
+            )
+        )
+    ).delete(synchronize_session=False)
+    
+    db.query(models.AdventureAttempt).filter(
+        models.AdventureAttempt.adventure_id == adventure_id
+    ).delete(synchronize_session=False)
+    
+    db.delete(adventure)
+    db.commit()
+    
+    return {"message": "Adventure deleted successfully"}
 
 @app.post("/adventure_submissions")
 async def submit_adventure_problem(

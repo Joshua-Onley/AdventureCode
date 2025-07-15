@@ -5,6 +5,8 @@ import ReactFlow, {
   MiniMap,
   ConnectionLineType,
   ConnectionMode,
+  type Node,
+  type Edge,
 } from "reactflow";
 import axios from "axios";
 import "reactflow/dist/style.css";
@@ -13,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
 import ProblemForm from "../components/ProblemForm"; 
-import EdgeSettingsModal from "../components/adventure/EdgeSettingsModal";
+import NodeEditPanel from "../components/adventure/NodeEditPanel"; 
 
 import { useAdventureGraph } from "../hooks/useAdventureGraph";
 import { useProblemForm } from "../hooks/useProblemForm";
@@ -22,14 +24,13 @@ import { createAdventure } from "../api/adventure";
 import useAutoSave from "../hooks/useAutosave";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 
-import type { Node, Edge } from "reactflow";
-
 import type {
   AdventureCreate,
   NodeData as SharedNodeData,
   EdgeData as SharedEdgeData,
   ProblemBase,
-  } from "../components/shared/types";
+  ProblemData,
+} from "../components/shared/types";
 
 type AdventureDraft = {
   adventureTitle: string;
@@ -55,6 +56,7 @@ const CreateAdventure = () => {
   const [adventureTitle, setAdventureTitle] = useState("");
   const [adventureDescription, setAdventureDescription] = useState("");
   const [message, setMessage] = useState("");
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null); 
 
   const userId = localStorage.getItem('userId') || 'unknown';
   const STORAGE_KEY = `draft:CreateAdventure:${userId}`;
@@ -98,13 +100,21 @@ const CreateAdventure = () => {
 
     setEdges(edges.map(edge => 
       edge.id === selectedEdge.id
-        ? { ...edge, data: { ...edge.data, condition } }
+        ? { 
+            ...edge, 
+            data: { ...edge.data, condition },
+            style: {
+              stroke: condition === 'correct' 
+                ? '#10B981' 
+                : condition === 'incorrect' 
+                  ? '#EF4444' 
+                  : '#6B7280'
+            }
+          }
         : edge
     ));
-    setSelectedEdge(null);
-  }, [edges, selectedEdge, setEdges, setSelectedEdge]);
+  }, [edges, selectedEdge, setEdges]);
 
- 
   const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, {
     adventureTitle,
     adventureDescription,
@@ -130,7 +140,9 @@ const CreateAdventure = () => {
     setEdges([]);
     setMessage("");
     setShouldBlockSave(false);
-  }, [setNodes, setEdges]);
+    setSelectedNode(null); 
+    setSelectedEdge(null); 
+  }, [setNodes, setEdges, setSelectedEdge]);
 
   useEffect(() => {
     if (isCheckingAuth) return;
@@ -139,24 +151,20 @@ const CreateAdventure = () => {
     const currentUserId = localStorage.getItem('userId') || 'unknown';
     
     if (draft) {
-      
       if (draft.userId === currentUserId) {
         setAdventureTitle(draft.adventureTitle);
         setAdventureDescription(draft.adventureDescription);
         setNodes(draft.nodes || []);
         setEdges(draft.edges || []);
       } else {
-       
         clearSavedData();
         resetAdventureState();
       }
     } else {
-      
       resetAdventureState();
     }
   }, [isCheckingAuth, loadSavedData, setNodes, setEdges, clearSavedData, resetAdventureState]); 
 
-  
   const handleSaveAdventure = async () => {
     const token = getStoredToken();
     
@@ -183,32 +191,30 @@ const CreateAdventure = () => {
 
     try {
       const payload: AdventureCreate = {
-              name: adventureTitle,
-              description: adventureDescription,
-              problems: nodes.map((n) => n.data as ProblemBase),
-              graph_data: {
-                nodes: nodes.map<SharedNodeData>((n) => ({
-                  id: n.id,
-                  position: n.position,
-                  data: n.data as ProblemBase,
-                  type: n.type,
-                })),
-                edges: edges.map<SharedEdgeData>((e) => ({
-                  id: e.id!,
-                  source: e.source,
-                  target: e.target,
-                  data: { condition: e.data.condition },
-                  type: e.type,
-                })),
-              },
-              is_public: false,
-              request_public: false,
-            };
-        
-            await createAdventure(payload);
+        name: adventureTitle,
+        description: adventureDescription,
+        problems: nodes.map((n) => n.data as ProblemBase),
+        graph_data: {
+          nodes: nodes.map<SharedNodeData>((n) => ({
+            id: n.id,
+            position: n.position,
+            data: n.data as ProblemBase,
+            type: n.type,
+          })),
+          edges: edges.map<SharedEdgeData>((e) => ({
+            id: e.id!,
+            source: e.source,
+            target: e.target,
+            data: { condition: e.data.condition },
+            type: e.type,
+          })),
+        },
+        is_public: false,
+        request_public: false,
+      };
+    
+      await createAdventure(payload);
 
-      
-      
       setMessage("Adventure created successfully!");
       setShouldBlockSave(true); 
       clearSavedData();
@@ -216,6 +222,7 @@ const CreateAdventure = () => {
       setTimeout(() => {
         setMessage("");
       }, 2000);
+
     } catch (error) {
         let errorMessage = "Something went wrong. Try again later.";
         if (error instanceof Error) {
@@ -235,17 +242,30 @@ const CreateAdventure = () => {
       }
     };
 
-  const handleAddProblemToCanvas = useCallback(() => {
-    if (!newProblem.title.trim() || !newProblem.code_snippet.trim()) {
-      setMessage("Title and code snippet are required");
-      return;
-    }
-    
-    const newNode = createNewNode(nodes, newProblem);
-    setNodes([...nodes, newNode]);
-    resetForm();
-    setMessage("Problem added to canvas!");
-  }, [newProblem, nodes, createNewNode, setNodes, resetForm]);
+    const handleAddProblemToCanvas = useCallback(() => {
+      if (!newProblem.title.trim() || !newProblem.code_snippet.trim()) {
+        setMessage("Title and code snippet are required");
+        
+        setTimeout(() => {
+          setMessage("");
+        }, 5000);
+        return;
+      }
+      
+      const newNode = createNewNode(nodes, newProblem);
+      setNodes([...nodes, newNode]);
+      resetForm();
+      setMessage("Problem added to canvas successfully!");
+     
+   
+      setSelectedNode(null); 
+      setSelectedEdge(null);
+      setShowProblemForm(false);
+      
+      setTimeout(() => {
+        setMessage("");
+      }, 5000);
+    }, [newProblem, nodes, createNewNode, setNodes, resetForm, setSelectedEdge, setShowProblemForm]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -265,43 +285,190 @@ const CreateAdventure = () => {
     setAdventureDescription("");
     clearGraph();
     setMessage("");
-  }, [clearGraph]);
+    setSelectedNode(null); 
+    setSelectedEdge(null); 
+  }, [clearGraph, setSelectedEdge]);
+
+  const updateNodeData = useCallback((nodeId: string, data: Partial<ProblemData>) => {
+    setNodes(nodes.map(node => 
+      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
+    ));
+    
+    if (selectedNode && selectedNode.id === nodeId) {
+      setSelectedNode({
+        ...selectedNode,
+        data: { ...selectedNode.data, ...data }
+      });
+    }
+  }, [nodes, selectedNode, setNodes]);
+
+  const handleDeleteNode = useCallback((nodeId: string) => {
+    setNodes(nodes.filter(node => node.id !== nodeId));
+    setEdges(edges.filter(edge => edge.source !== nodeId && edge.target !== nodeId));
+    
+    if (selectedNode?.id === nodeId) {
+      setSelectedNode(null);
+    }
+  }, [edges, nodes, selectedNode, setEdges, setNodes]);
+
+  const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+    setSelectedEdge(null);
+    setShowProblemForm(false); 
+  }, [setSelectedEdge, setShowProblemForm]);
+
+  const handleEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
+    setSelectedNode(null); 
+    setShowProblemForm(false);
+  }, [setSelectedEdge, setShowProblemForm]);
 
   if (isCheckingAuth) {
     return <div>Checking authentication...</div>;
   }
 
   return (
-    <div className="create-adventure-container">
-      {showTokenExpired && (
-        <div className="token-expired-banner">
-          <p>Your session has expired. Please re-authenticate.</p>
-          <button onClick={() => navigate('/login')}>Login Now</button>
-          <p>Your progress will be saved automatically.</p>
+    <div className="flex flex-col h-screen">
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Create Learning Adventure</h1>
+        <div className="flex space-x-2">
+          <button
+            onClick={shouldBlockSave ? startNewAdventure : handleSaveAdventure}
+            disabled={!adventureTitle.trim() || nodes.length === 0}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          >
+            {shouldBlockSave ? "Create New Adventure" : "Save Adventure"}
+          </button>
+          <button
+            onClick={() => navigate("/my-adventures")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Cancel
+          </button>
         </div>
-      )}
-      
-      <h2 className="text-2xl font-bold mb-4">Create Learning Adventure</h2>
-
-      <div className="adventure-metadata">
-        <input
-          type="text"
-          placeholder="Adventure Title"
-          value={adventureTitle}
-          onChange={handleTitleChange}
-          required
-          disabled={shouldBlockSave}
-        />
-        <textarea
-          placeholder="Description"
-          value={adventureDescription}
-          onChange={handleDescChange}
-          rows={2}
-          disabled={shouldBlockSave}
-        />
       </div>
 
-      {showProblemForm && (
+      {showTokenExpired && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <strong>Session Expired:</strong>
+          <div className="mt-2">
+            Your session has expired. Please re-authenticate.
+            <button 
+              onClick={() => navigate('/login')}
+              className="ml-2 bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm"
+            >
+              Login Now
+            </button>
+          </div>
+          <p className="mt-1 text-sm">Your progress will be saved automatically.</p>
+        </div>
+      )}
+      {message && (
+        <div className={`px-4 py-3 rounded ${
+          message.includes("success") 
+            ? "bg-green-100 border border-green-400 text-green-700" 
+            : "bg-red-100 border border-red-400 text-red-700"
+        }`}>
+          <strong>{message.includes("success") ? "Success:" : "Error:"}</strong>
+          <div className="mt-2">{message}</div>
+          {message.includes("success") && (
+            <p className="mt-2 text-sm">Your adventure was saved successfully!</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-3/4 h-full flex flex-col">
+          <div className="bg-white p-4 border-b border-gray-200">
+            <div className="flex space-x-4">
+              <input
+                type="text"
+                placeholder="Adventure Title"
+                value={adventureTitle}
+                onChange={handleTitleChange}
+                required
+                disabled={shouldBlockSave}
+                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <textarea
+                placeholder="Description (optional)"
+                value={adventureDescription}
+                onChange={handleDescChange}
+                rows={1}
+                disabled={shouldBlockSave}
+                className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1">
+            {nodes.length === 0 ? (
+              <div className="flex items-center justify-center h-full bg-gray-50">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">No problems added yet</p>
+                  <button
+                    onClick={() => setShowProblemForm(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    disabled={shouldBlockSave}
+                  >
+                    Create First Problem
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={handleNodeClick}
+                onEdgeClick={handleEdgeClick}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                fitView
+                connectionLineType={ConnectionLineType.SmoothStep}
+                connectionMode={ConnectionMode.Loose}
+                connectionRadius={30}
+              >
+                <Controls />
+                <MiniMap />
+                <Background gap={12} size={1} />
+              </ReactFlow>
+            )}
+          </div>
+        </div>
+
+        <div className="w-1/4 bg-white border-l border-gray-200 overflow-y-auto">
+  <div className="p-4">
+    <div className="space-y-2 mb-4">
+      <button
+        onClick={() => {
+          setShowProblemForm(!showProblemForm);
+          setSelectedNode(null);
+          setSelectedEdge(null);
+        }}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        disabled={shouldBlockSave}
+      >
+        {showProblemForm ? "Hide Problem Form" : "Create New Problem"}
+      </button>
+      <button
+        onClick={() => {
+          clearGraph();
+          setMessage("");
+          setSelectedNode(null);
+          setSelectedEdge(null);
+        }}
+        className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+        disabled={shouldBlockSave}
+      >
+        Clear Canvas
+      </button>
+    </div>
+
+    {showProblemForm ? (
+      <div className="bg-gray-50 p-4 rounded-lg mb-4">
         <ProblemForm
           problem={newProblem}
           onChange={setNewProblem}
@@ -310,98 +477,58 @@ const CreateAdventure = () => {
           title="Add Problem to Adventure"
           submitText="Add to Canvas"
         />
-      )}
-
-      <div className="flow-container" style={{height: '500px' }}>
-        {nodes.length === 0 ? (
-          <div className="empty-canvas">
-            <p className="mb-4">No problems added yet</p>
-            <button
-              onClick={() => setShowProblemForm(true)}
-              className="button button-primary"
-              disabled={shouldBlockSave}
-            >
-              Create First Problem
-            </button>
-          </div>
-        ) : (
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onEdgeClick={(_, edge) => setSelectedEdge(edge)}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            connectionLineType={ConnectionLineType.SmoothStep}
-            connectionMode={ConnectionMode.Loose}
-            connectionRadius={30}
-          >
-            <Controls />
-            <MiniMap />
-            <Background gap={12} size={1} />
-          </ReactFlow>
-        )}
       </div>
-
-      <EdgeSettingsModal
-        edge={selectedEdge}
-        onClose={() => setSelectedEdge(null)}
-        onDelete={deleteSelectedEdge}
-        onChangeCondition={handleEdgeConditionChange}
+    ) : selectedNode ? (
+      <NodeEditPanel
+        node={selectedNode}
+        onUpdate={updateNodeData}
+        onDelete={handleDeleteNode}
       />
-
-      <div className="action-buttons">
-        <div className="button-group">
-          <button
-            onClick={() => setShowProblemForm(!showProblemForm)}
-            className="button button-primary"
-            disabled={shouldBlockSave}
+    ) : selectedEdge ? (
+      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+        <h2 className="text-xl font-bold mb-4">Edit Connection</h2>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Condition</label>
+          <select
+            value={selectedEdge.data?.condition || "default"}
+            onChange={(e) => handleEdgeConditionChange(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
           >
-            {showProblemForm ? "Hide Problem Form" : "Create New Problem"}
-          </button>
-          <button
-            onClick={() => {
-              clearGraph();
-              setMessage("");
-            }}
-            className="button button-secondary"
-            disabled={shouldBlockSave}
-          >
-            Clear Canvas
-          </button>
+            <option value="default">Default/Always</option>
+            <option value="correct">Correct Solution</option>
+            <option value="incorrect">Incorrect Solution</option>
+          </select>
         </div>
+        
         <button
-          onClick={shouldBlockSave ? startNewAdventure : handleSaveAdventure}
-          className="button button-primary"
+          onClick={deleteSelectedEdge}
+          className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
         >
-          {shouldBlockSave ? "Create New Adventure" : "Save Adventure"}
+          Delete Connection
         </button>
       </div>
-
-      {message && (
-        <div className={`message ${
-          message.includes("success") ? "message-success" : "message-error"
-        }`}>
-          {message}
-          {message.includes("success") && (
-            <p className="mt-2">Your adventure was saved successfully!</p>
-          )}
+    ) : (
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="font-bold mb-2">Transition Types:</h3>
+        <div className="space-y-1 text-sm">
+          <div className="flex items-center">
+            <div className="w-4 h-1 bg-green-500 mr-2"></div>
+            <span><strong>Green:</strong> Correct path</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-1 bg-red-500 mr-2"></div>
+            <span><strong>Red:</strong> Incorrect path</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-1 bg-gray-400 mr-2"></div>
+            <span><strong>Grey:</strong> Default path</span>
+          </div>
         </div>
-      )}
-
-      <div className="legend">
-        <p className="font-bold">Transition Types:</p>
-        <p>
-          <span className="color-indicator bg-green-500"></span>
-          <strong>Green:</strong> Correct path (solid) &nbsp;
-          <span className="color-indicator bg-red-500"></span>
-          <strong>Red:</strong> Incorrect path (solid) &nbsp;
-          <span className="color-indicator bg-gray-400"></span>
-          <strong>Grey:</strong> Default path (solid)
-        </p>
+      </div>
+    )}
+  </div>
+</div>
       </div>
     </div>
   );

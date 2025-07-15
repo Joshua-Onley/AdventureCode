@@ -1,66 +1,60 @@
 import React from 'react';
-import CodeEditor from './CodeEditor';
-import type { ProblemBase } from '../components/shared/types';
+import CodeEditor from '../CodeEditor';
+import type { Node } from 'reactflow';
+import type { ProblemData } from '../shared/types';
 
-interface ProblemFormProps {
-  problem: ProblemBase;
-  onChange: (problem: ProblemBase) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  title: string;
-  submitText: string;
+interface NodeEditPanelProps {
+  node: Node<ProblemData>;
+  onUpdate: (nodeId: string, data: Partial<ProblemData>) => void;
+  onDelete: (nodeId: string) => void;
 }
 
-const ProblemForm: React.FC<ProblemFormProps> = ({
-  problem,
-  onChange,
-  onSubmit,
-  onCancel,
-  title,
-  submitText
+const NodeEditPanel: React.FC<NodeEditPanelProps> = ({
+  node,
+  onUpdate,
+  onDelete
 }) => {
-  const handleInputChange = (field: keyof ProblemBase, value: string) => {
-    onChange({ ...problem, [field]: value });
+  const handleInputChange = (field: keyof ProblemData, value: string) => {
+    onUpdate(node.id, { [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit();
+  const handleDeleteNode = () => {
+    if (window.confirm('Are you sure you want to delete this node?')) {
+      onDelete(node.id);
+    }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-bold mb-4">{title}</h2>
+    <div className="bg-white rounded-lg shadow-md p-4">
+      <h2 className="text-xl font-bold mb-4">Edit Problem Node</h2>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Problem Title</label>
           <input
             type="text"
-            value={problem.title}
+            value={node.data.title || ''}
             onChange={(e) => handleInputChange('title', e.target.value)}
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter problem title"
-            required
           />
         </div>
 
-       
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
-            value={problem.description}
+            value={node.data.description || ''}
             onChange={(e) => handleInputChange('description', e.target.value)}
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={3}
             placeholder="Describe the problem and what needs to be solved"
-            required
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">Programming Language</label>
           <select
-            value={problem.language}
+            value={node.data.language || 'python'}
             onChange={(e) => handleInputChange('language', e.target.value)}
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
@@ -77,27 +71,24 @@ const ProblemForm: React.FC<ProblemFormProps> = ({
             <option value="swift">Swift</option>
             <option value="kotlin">Kotlin</option>
             <option value="bash">Bash</option>
-          
-
-   
           </select>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Code Snippet</label>
           <CodeEditor
-            value={problem.code_snippet}
+            value={node.data.code_snippet || ''}
             onChange={(value) => handleInputChange('code_snippet', value)}
-            language={problem.language}
+            language={node.data.language || 'python'}
             height="200px"
-            placeholder={`Enter your ${problem.language} code here...`}
+            placeholder={`Enter your ${node.data.language || 'python'} code here...`}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Expected Output</label>
           <CodeEditor
-            value={problem.expected_output}
+            value={node.data.expected_output || ''}
             onChange={(value) => handleInputChange('expected_output', value)}
             language="text"
             height="100px"
@@ -108,22 +99,15 @@ const ProblemForm: React.FC<ProblemFormProps> = ({
 
         <div className="flex space-x-2 pt-4">
           <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleDeleteNode}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
           >
-            {submitText}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Cancel
+            Delete Node
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
 
-export default ProblemForm;
+export default NodeEditPanel;

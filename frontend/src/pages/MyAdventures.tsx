@@ -1,50 +1,36 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
+import type { Adventure } from "../components/shared/types";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
-interface Adventure {
-  id: number;
-  title: string;
-  description: string;
-}
-
-const MyAdventures = () => {
-  const navigate = useNavigate();
+const MyAdventures: React.FC = () => {
   const [adventures, setAdventures] = useState<Adventure[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAdventures = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          navigate("/login", { replace: true });
+          navigate("/login");
           return;
         }
 
-        
-        const response = await axios.get(`${FASTAPI_BACKEND_URL}/adventures/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
+        const response = await axios.get<Adventure[]>(
+          `${FASTAPI_BACKEND_URL}/adventures/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log(response.data)
         setAdventures(response.data);
       } catch (err) {
-        let errorMessage = "Failed to load adventures";
-        
-        if (axios.isAxiosError(err)) {
-          errorMessage = err.response?.data?.detail || err.message;
-        } else if (err instanceof Error) {
-          errorMessage = err.message;
-        }
-        
-        setError(errorMessage);
+        setError("Failed to fetch adventures");
+        console.error("Error fetching adventures:", err);
       } finally {
         setLoading(false);
       }
@@ -53,42 +39,94 @@ const MyAdventures = () => {
     fetchAdventures();
   }, [navigate]);
 
-  if (loading) return <div>Loading adventures...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
+  const handleEditAdventure = (adventureId: number) => {
+    navigate(`/adventures/edit/${adventureId}`);
+  };
+
+  const handleDeleteAdventure = async (adventureId: number) => {
+    if (!window.confirm("Are you sure you want to delete this adventure?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${FASTAPI_BACKEND_URL}/adventures/${adventureId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+     
+      setAdventures(prev => prev.filter(a => a.id !== adventureId));
+    } catch (err) {
+      console.error("Error deleting adventure:", err);
+      alert("Failed to delete adventure");
+    }
+  };
+
+  if (loading) {
+    return <div className="p-4">Loading adventures...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
 
   return (
-    <div>
-      <h1>My Adventures</h1>
-      <button 
-        onClick={() => navigate("/create-adventure")}
-      >
-        Create New Adventure
-      </button>
-
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">My Adventures</h1>
+      
       {adventures.length === 0 ? (
-        <div>
-          <p>You haven't created any adventures yet</p>
+        <div className="text-center py-12">
+          <p className="text-lg mb-4">You haven't created any adventures yet</p>
+          <button
+            onClick={() => navigate("/create-adventure")}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Create New Adventure
+          </button>
         </div>
       ) : (
-        <div>
-          {adventures.map((adventure) => (
-            <div 
-              key={adventure.id} 
-              onClick={() => navigate(`/adventures/${adventure.id}`)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {adventures.map(adventure => (
+            <div
+              key={adventure.id}
+              className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
             >
-              <h3>{adventure.title}</h3>
-              <p>{adventure.description || "No description"}</p>
-              <div>
-                <span>ID: {adventure.id}</span>
-                <button 
+              <div className="p-5">
+                <h2 className="text-xl font-bold mb-2">{adventure.name}</h2>
+                {adventure.description && (
+                  <p className="text-gray-600 mb-4 line-clamp-2">
+                    {adventure.description}<br></br>
+                    Access Code: {adventure.access_code}<br></br>
+                    
+                    
+                    
+                  </p>
                   
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/adventures/${adventure.id}`);
-                  }}
-                >
-                  View
-                </button>
+                )}
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    {adventure.total_attempts || 0} attempts
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {adventure.total_completions || 0} completions
+                  </span>
+                </div>
+                
+                <div className="flex space-x-2 mt-4">
+                  <button
+                    onClick={() => handleEditAdventure(adventure.id)}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAdventure(adventure.id)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}

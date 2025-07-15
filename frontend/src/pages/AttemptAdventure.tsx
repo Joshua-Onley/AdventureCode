@@ -41,7 +41,7 @@ const edgeTypes = {
 };
 
 const AttemptAdventure: React.FC = () => {
-  const { id: adventureId } = useParams<{ id: string }>();
+  const { code: accessCode } = useParams<{ code: string }>();
   const navigate = useNavigate();
 
   const [adventure, setAdventure] = useState<Adventure | null>(null);
@@ -53,17 +53,17 @@ const AttemptAdventure: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!adventureId) return;
+    if (!accessCode) return;
     const token = localStorage.getItem("token");
 
     if (!token) {
       navigate("/login", { replace: true });
     }
 
-    axios
-      .get<Adventure>(`${FASTAPI_BACKEND_URL}/adventures/${adventureId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    axios.get<Adventure>(
+      `${FASTAPI_BACKEND_URL}/adventures/access/${accessCode}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
       .then((res) => {
         setAdventure(res.data);
         
@@ -98,10 +98,13 @@ const AttemptAdventure: React.FC = () => {
           }))
         );
       })
-      .catch(() => {
-        navigate("/");
+      .catch((err) => {
+        console.error("Failed to fetch adventure:", err);
+        setAdventure(null);
+        setLoading(false);
+        
       });
-  }, [adventureId, navigate]);
+  }, [accessCode, navigate]);
 
   useEffect(() => {
     if (!adventure) return;
@@ -349,7 +352,7 @@ const AttemptAdventure: React.FC = () => {
         </p>
         <p className="mt-2">
           <span className="color-indicator" style={{ backgroundColor: '#ffd700' }}></span>
-          <strong>Gold Border:</strong> Current problem
+          <strong>Blue Node:</strong> Current problem
         </p>
       </div>
     </div>

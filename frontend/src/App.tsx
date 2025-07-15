@@ -10,6 +10,7 @@ import CreateAdventure from "./pages/CreateAdventure";
 import FetchUserAdventures from "./pages/MyAdventures";
 import AdventureDetail from "./components/adventure/AdventureDetail"
 import AttemptAdventure from "./pages/AttemptAdventure";
+import EditAdventure from "./pages/EditAdventure";
 
 const App: React.FC = () => {
   return (
@@ -24,8 +25,9 @@ const App: React.FC = () => {
         <Route path="/attempt" element={<AttemptProblem />} />
         <Route path="/create-adventure" element={<CreateAdventure />} />
         <Route path="/my-adventures" element={<FetchUserAdventures />}/>
+        <Route path="/adventures/edit/:id" element={<EditAdventure />} />
         <Route path="/adventures/:id" element={<AdventureDetail />} />
-        <Route path="/adventure/:id/attempt" element={<AttemptAdventure />} />
+        <Route path="/adventures/access/:code" element={<AttemptAdventure />} />
  
       </Routes>
     </Router>

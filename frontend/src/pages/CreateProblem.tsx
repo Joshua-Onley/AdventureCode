@@ -35,11 +35,6 @@ const CreateProblem = () => {
   const handleProblemChange = useCallback((newProblem: ProblemBase) => {
     if (!shouldBlockSave) setProblem(newProblem);
   }, [shouldBlockSave]);
-
-  const handlePublicChange = useCallback((isPublic: boolean) => {
-    if (!shouldBlockSave) setIsPublic(isPublic);
-  }, [shouldBlockSave]);
-
   
   const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, {
     problem,
@@ -183,9 +178,7 @@ const CreateProblem = () => {
           }}
           title="Create Problem"
           submitText={loading ? "Creating..." : "Create Problem"}
-          showPublicOption={true}
-          isPublic={isPublic}
-          onPublicChange={handlePublicChange}
+
         />
       )}
       
