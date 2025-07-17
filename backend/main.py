@@ -91,7 +91,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         if username is None:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
         user = db.query(models.User).filter(models.User.username == username).first()
-        print(f"{user}")
+        
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return user
@@ -130,7 +130,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user.username})
-    print(f"Generated token: {access_token}") 
+    
     return {"access_token": access_token, "token_type": "bearer", "user": {"id": user.id, "username": user.username}}
 
 @app.get("/me")
@@ -356,13 +356,31 @@ async def fetch_public_adventures(
             "access_code": adventure.access_code,
             "start_node_id": adventure.start_node_id,
             "end_node_id": adventure.end_node_id,
-            "fastest_completion_time": adventure.best_completion_time,
-            "average_completion_time": adventure.avg_completion_time
+            "best_completion_time": adventure.best_completion_time,
+            "avg_completion_time": adventure.avg_completion_time,
+            "best_completion_user": None
             
         }
-        print(adventure_dict.values())
+        fastest = (
+            db.query(models.Leaderboard, models.User.username)
+            .join(models.User, models.Leaderboard.user_id == models.User.id)
+            .filter(models.Leaderboard.adventure_id == adventure.id)
+            .order_by(models.Leaderboard.completion_time.asc())
+        .first())
+
+        
+
+        if fastest:
+            
+            entry, username = fastest
+            adventure_dict["best_completion_time"] = entry.completion_time.total_seconds()
+            adventure_dict["best_completion_user"] = username
+        else:
+            adventure_dict["best_completion_time"] = None
+            adventure_dict["best_completion_user"] = None
+
         adventures_json.append(adventure_dict)
-        print({"adventures": adventures_json})
+   
     
     return {"adventures": adventures_json}
 
@@ -408,6 +426,8 @@ async def get_or_start_adventure_attempt(
     current_user: models.User = Depends(get_current_user),
 ):
     print("get_or_start_adventure_attempt")
+    
+
     attempt = (
         db.query(models.AdventureAttempt)
         .filter(
@@ -424,6 +444,17 @@ async def get_or_start_adventure_attempt(
     if not adventure:
         raise HTTPException(404, "Adventure not found")
 
+
+    prior_completion = (
+        db.query(models.AdventureAttempt)
+        .filter(
+            models.AdventureAttempt.adventure_id == adventure_id,
+            models.AdventureAttempt.user_id == current_user.id,
+            models.AdventureAttempt.completed == True,
+        )
+        .first()
+    )
+
     attempt = models.AdventureAttempt(
         adventure_id=adventure_id,
         user_id=current_user.id,
@@ -438,7 +469,10 @@ async def get_or_start_adventure_attempt(
         completed=False,
     )
     db.add(attempt)
-    adventure.total_attempts = (adventure.total_attempts or 0) + 1
+    
+    if not prior_completion:
+        adventure.total_attempts = (adventure.total_attempts or 0) + 1
+    
     db.commit()
     db.refresh(attempt)
     return attempt
@@ -461,78 +495,102 @@ async def get_user_attempts(
     attempts = query.all()
     return attempts
 
-
-@app.patch("/attempts/{attempt_id}/progress", response_model=schemas.AdventureAttempt)
+@app.patch(
+    "/attempts/{attempt_id}/progress",
+    response_model=schemas.AdventureAttempt,
+    status_code=status.HTTP_200_OK,
+)
 async def update_attempt_progress(
     attempt_id: int,
     progress: schemas.AdventureProgress,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user),
 ):
-    attempt = db.query(models.AdventureAttempt).filter(
-        models.AdventureAttempt.id == attempt_id,
-        models.AdventureAttempt.user_id == current_user.id
-    ).first()
-    
+    attempt = (
+        db.query(models.AdventureAttempt)
+        .filter(
+            models.AdventureAttempt.id == attempt_id,
+            models.AdventureAttempt.user_id == current_user.id,
+        )
+        .first()
+    )
+  
+
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
-    
+
+
     new_entry = {
         "node_id": str(progress.current_node_id),
         "outcome": progress.outcome.value,
-        "timestamp": datetime.now(timezone.utc),
-        "code": progress.code
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "code": progress.code,
     }
-    
-    if not attempt.path_taken:
-        attempt.path_taken = []
+    attempt.path_taken = attempt.path_taken or []
     attempt.path_taken.append(new_entry)
     attempt.current_node_id = str(progress.current_node_id)
-    
-    if hasattr(progress, 'completed') and progress.completed:
+
+  
+    if getattr(progress, "completed", False):
         attempt.completed = True
         attempt.end_time = datetime.now(timezone.utc)
-        
+
+
         if attempt.start_time:
             attempt.duration = attempt.end_time - attempt.start_time
-        
-        adventure = db.query(models.Adventure).filter(
-            models.Adventure.id == attempt.adventure_id
-        ).first()
-        
+
+
+        adventure = (
+            db.query(models.Adventure)
+            .filter(models.Adventure.id == attempt.adventure_id)
+            .first()
+        )
         if adventure:
-            
-            user_previous_completion = db.query(models.AdventureAttempt).filter(
-                models.AdventureAttempt.adventure_id == adventure.id,
-                models.AdventureAttempt.user_id == current_user.id,
-                models.AdventureAttempt.completed == True,
-                models.AdventureAttempt.id != attempt_id  
-            ).first()
-            
-            if not user_previous_completion:
-                adventure.total_completions = (adventure.total_completions or 0) + 1
-            
-            if attempt.duration:
-                if (not adventure.best_completion_time or
-                    attempt.duration < adventure.best_completion_time):
-                    adventure.best_completion_time = attempt.duration
-                
-                all_completed_attempts = db.query(models.AdventureAttempt).filter(
+         
+            prior = (
+                db.query(models.AdventureAttempt)
+                .filter(
                     models.AdventureAttempt.adventure_id == adventure.id,
-                    models.AdventureAttempt.completed == True
-                ).all()
-                
-                if all_completed_attempts:
-                    total_duration = sum(
-                        a.duration.total_seconds() for a in all_completed_attempts 
-                        if a.duration
+                    models.AdventureAttempt.user_id == current_user.id,
+                    models.AdventureAttempt.completed == True,
+                    models.AdventureAttempt.id != attempt_id,
+                )
+                .first()
+            )
+            if not prior:
+                adventure.total_completions = (adventure.total_completions or 0) + 1
+
+            if attempt.duration:
+                if not adventure.best_completion_time or attempt.duration < adventure.best_completion_time:
+                    adventure.best_completion_time = attempt.duration
+
+                all_done = (
+                    db.query(models.AdventureAttempt)
+                    .filter(
+                        models.AdventureAttempt.adventure_id == adventure.id,
+                        models.AdventureAttempt.completed == True,
                     )
-                    adventure.avg_completion_time = timedelta(
-                        seconds=total_duration / len(all_completed_attempts)
-                    )
+                    .all()
+                )
+                if all_done:
+                    total_secs = sum(a.duration.total_seconds() for a in all_done if a.duration)
+                    adventure.avg_completion_time = timedelta(seconds=total_secs / len(all_done))
+
+
+        leaderboard_entry = models.Leaderboard(
+            adventure_id=attempt.adventure_id,
+            user_id=current_user.id,
+            completion_time=attempt.duration,
+            completed_at=attempt.end_time,
+            score=attempt.duration.total_seconds(),  
+        )
+        db.add(leaderboard_entry)
+
     
     db.commit()
+    db.refresh(attempt)
     return attempt
+
 
 @app.put("/adventures/{adventure_id}", response_model=schemas.Adventure)
 async def update_adventure(

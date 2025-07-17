@@ -1,3 +1,5 @@
+
+
 export interface ProblemBase {
     title: string;
     description: string;
@@ -101,8 +103,8 @@ export interface ProblemBase {
     access_code: string | null;
     start_node_id: string;
     end_node_id: string;
-    fastest_completion_time: number | null; 
-    fastest_completion_user: string | null; 
+    best_completion_time: number | null;
+    best_completion_user: string | null;
   }
   
   export interface PublicAdventuresResponse {

@@ -21,6 +21,13 @@ export function Header({ currentUsername, handleLogout }: HeaderProps) {
       <div className="flex space-x-2">
         {currentUsername ? (
           <>
+
+            <button
+              onClick={() => navigate("/me")}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
+            >
+              My Profile
+            </button>
             
             <button
               onClick={handleLogout}

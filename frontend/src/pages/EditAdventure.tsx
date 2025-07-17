@@ -242,10 +242,10 @@ const EditAdventure: React.FC = () => {
       position: { x: 100, y: 100 },
       data: {
         title: "New Problem",
-        description: "Describe the problem here",
+        description: "",
         language: "python",
-        code_snippet: "print('Hello, World!')",
-        expected_output: "Hello, World!",
+        code_snippet: "",
+        expected_output: "",
         label: "New Problem"
       }
     };
@@ -328,7 +328,7 @@ const EditAdventure: React.FC = () => {
               onClick={handleAddNode}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2"
             >
-              Add New Node
+              Add New Problem Node
             </button>
           </div>
           

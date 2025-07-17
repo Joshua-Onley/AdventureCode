@@ -19,8 +19,10 @@ interface Adventure {
   access_code: string | null;
   start_node_id: string;
   end_node_id: string;
-  fastest_completion_time: number | null; 
-  fastest_completion_user: string | null; 
+  best_completion_time: number | null;
+  best_completion_user: string | null;
+
+   
 }
 
 const Landing = () => {
@@ -69,8 +71,6 @@ const Landing = () => {
     navigate(`/adventures/access/${accessCode}`);
   };
 
-
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -79,19 +79,25 @@ const Landing = () => {
     });
   };
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
+  const formatTime = (timeInSeconds: number | null): string => {
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${remainingSeconds}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${remainingSeconds}s`;
+    if (!timeInSeconds) {
+      return "no attempts"
+    }
+    if (timeInSeconds < 60) {
+      return `${Math.round(timeInSeconds)}s`;
+    } else if (timeInSeconds < 3600) {
+      const minutes = Math.floor(timeInSeconds / 60);
+      const seconds = Math.round(timeInSeconds % 60);
+      return `${minutes}m ${seconds}s`;
     } else {
-      return `${remainingSeconds}s`;
+      const hours = Math.floor(timeInSeconds / 3600);
+      const minutes = Math.floor((timeInSeconds % 3600) / 60);
+      const seconds = Math.round(timeInSeconds % 60);
+      return `${hours}h ${minutes}m ${seconds}s`;
     }
   };
+  
 
   const calculateSuccessRate = (attempts: number, completions: number) => {
     if (attempts === 0) return 0;
@@ -115,7 +121,7 @@ const Landing = () => {
           />
         </div>
 
-        <Sidebar currentUsername={currentUsername}>
+        <Sidebar>
         
           <>
           <div className="p-4 bg-white rounded shadow mb-4">

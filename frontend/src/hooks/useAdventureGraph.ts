@@ -31,10 +31,22 @@ export const useAdventureGraph = () => {
   );
 
   const validateGraph = (nodes: Node[], edges: Edge[]) => {
+
+    // every problem node must have all fields completed. i.e., no missing information from any problem ndoe
+
+    for (const node of nodes) {
+      if (!node.data.title || !node.data.description || !node.data.language || !node.data.code_snippet || !node.data.expected_output ) {
+        return `One or more problem nodes are missing information - all fields must be completed for each node`
+      }
+    }
+
+
     // an adventure has to have at least 2 problems otherwise the single problem creation page is more appropriate
     if (nodes.length < 2) {
       return "Adventure must have at least 2 problems. Use the single problem creation for individual problems.";
     }
+
+    console.log(nodes)
 
     const edgesByTarget = new Map<string, Edge[]>();
     const edgesBySource = new Map<string, Edge[]>();

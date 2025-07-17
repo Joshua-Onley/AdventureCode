@@ -3,6 +3,8 @@ import { SuccessRate } from './SuccessRate';
 import type { Adventure } from '../shared/types';
 
 
+
+
 interface AdventureCardProps {
     adventure: Adventure;
     calculateSuccessRate: (attempts: number, completions: number) => number;
@@ -62,13 +64,18 @@ export const AdventureCard = ({
             </svg>
             <span className="text-sm font-medium text-yellow-800">Fastest Completion</span>
           </div>
-          {adventure.fastest_completion_time && adventure.fastest_completion_user ? (
+          {adventure.best_completion_time ? (
             <div className="text-sm">
               <div className="font-bold text-yellow-900">
-                {formatTime(adventure.fastest_completion_time)}
+                { adventure.best_completion_time && (
+                  formatTime(adventure.best_completion_time)
+                )}
+
+                
+                
               </div>
               <div className="text-yellow-700">
-                by {adventure.fastest_completion_user}
+                by { adventure.best_completion_user }
               </div>
             </div>
           ) : (

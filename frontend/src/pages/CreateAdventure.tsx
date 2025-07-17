@@ -162,6 +162,7 @@ const CreateAdventure = () => {
       }
     } else {
       resetAdventureState();
+      
     }
   }, [isCheckingAuth, loadSavedData, setNodes, setEdges, clearSavedData, resetAdventureState]); 
 
@@ -221,7 +222,7 @@ const CreateAdventure = () => {
       
       setTimeout(() => {
         setMessage("");
-      }, 2000);
+      }, 500);
 
     } catch (error) {
         let errorMessage = "Something went wrong. Try again later.";
@@ -248,7 +249,7 @@ const CreateAdventure = () => {
         
         setTimeout(() => {
           setMessage("");
-        }, 5000);
+        }, 500);
         return;
       }
       
@@ -264,7 +265,7 @@ const CreateAdventure = () => {
       
       setTimeout(() => {
         setMessage("");
-      }, 5000);
+      }, 500);
     }, [newProblem, nodes, createNewNode, setNodes, resetForm, setSelectedEdge, setShowProblemForm]);
 
   useEffect(() => {
@@ -468,7 +469,7 @@ const CreateAdventure = () => {
     </div>
 
     {showProblemForm ? (
-      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+      <div className="bg-gray-50 rounded-lg mb-4">
         <ProblemForm
           problem={newProblem}
           onChange={setNewProblem}
