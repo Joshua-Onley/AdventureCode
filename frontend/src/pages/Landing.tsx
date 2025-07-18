@@ -31,8 +31,9 @@ const Landing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
-  const [accessCode, setAccessCode] = useState("");
-  const [codeError, setCodeError] = useState<string | null>(null);
+ 
+  
+  
 
   useEffect(() => {
     const currentUser = localStorage.getItem("userName");
@@ -44,7 +45,7 @@ const Landing = () => {
       try {
         setLoading(true);
         const adventures = await getPublicAdventures();
-        console.log(adventures)
+        
         setPublicAdventures(adventures);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -62,14 +63,8 @@ const Landing = () => {
     navigate('/login');
   };
 
-  const handleAccessSubmit = () => {
-    if (!accessCode.trim()) {
-      setCodeError("Please enter a 6‑digit code");
-      return;
-    }
-    setCodeError(null);
-    navigate(`/adventures/access/${accessCode}`);
-  };
+  
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -122,30 +117,6 @@ const Landing = () => {
         </div>
 
         <Sidebar>
-        
-          <>
-          <div className="p-4 bg-white rounded shadow mb-4">
-            <h3 className="font-semibold mb-2">Enter Access Code</h3>
-            <input
-              type="text"
-              maxLength={6}
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
-              className="w-full p-2 border rounded mb-2"
-              placeholder="e.g. A1B2C3"
-            />
-            {codeError && (
-              <p className="text-red-600 text-sm mb-2">{codeError}</p>
-            )}
-            <button
-              onClick={handleAccessSubmit}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
-            >
-              Go
-            </button>
-          </div>
-
-          </>
         </Sidebar>
       </div>
     </div>

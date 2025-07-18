@@ -158,6 +158,7 @@ async def create_problem(
     expected_output: str = Form(...),
     language: str = Form(...),
     is_public: bool = Form(...),
+    
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -171,7 +172,8 @@ async def create_problem(
         expected_output=expected_output,
         language=language,
         is_public=is_public,
-        creator_id=None if is_public else current_user.id,
+        completions  = 0,
+        creator_id=current_user.id,
         approval_requested_at=datetime.now(timezone.utc) if is_public else None
     )
 
@@ -184,6 +186,41 @@ async def create_problem(
         "access_code": access_code,
         "problem_id": new_problem.id
     }
+
+@app.get("/problems/")
+async def get_user_problems(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    problems = db.query(models.Problem).filter(
+        models.Problem.creator_id == current_user.id
+    ).all()
+    
+    return problems
+
+@app.delete("/problems/{problem_id}")
+async def delete_problem(
+    problem_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+
+    problem = db.query(models.Problem).filter(models.Problem.id == problem_id).first()
+    
+    if not problem:
+        raise HTTPException(status_code=404, detail="Problem not found")
+    
+
+    if problem.creator_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this problem"
+        )
+    
+    db.delete(problem)
+    db.commit()
+    
+    return {"message": "Problem deleted successfully"}
 
 @app.post("/submissions")
 async def submit_solution(
@@ -224,9 +261,15 @@ async def submit_solution(
 
         user_output = run_result.get("output", "").strip()
         expected_output = problem.expected_output.strip()
+
+        is_correct = False
        
         if user_output == expected_output:
             message = "Correct! Well done."
+            is_correct = True
+            problem.completions = (problem.completions or 0) + 1
+            db.commit()
+            db.refresh(problem)
         else:
             message = f"Incorrect. Expected output:\n{expected_output}\n\nYour output:\n{user_output}"
 
@@ -238,6 +281,7 @@ async def submit_solution(
             "stderr": run_result.get("stderr"),
             "ran": bool(run_result),
             "language": lang,
+            "is_correct": is_correct
         }
 
     except Exception as e:

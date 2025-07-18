@@ -1,6 +1,6 @@
 import React from 'react';
 import CodeEditor from './CodeEditor';
-import type { ProblemBase } from '../components/shared/types';
+import type { ProblemBase } from './types';
 
 interface ProblemFormProps {
   problem: ProblemBase;

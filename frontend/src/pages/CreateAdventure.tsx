@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
-import ProblemForm from "../components/ProblemForm"; 
+import ProblemForm from "../components/shared/ProblemForm"; 
 import NodeEditPanel from "../components/adventure/NodeEditPanel"; 
 
 import { useAdventureGraph } from "../hooks/useAdventureGraph";

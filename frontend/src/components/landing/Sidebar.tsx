@@ -1,11 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
+import AdventureAccessBox from '../adventure/AdventureAccessBox';
+import ProblemAccessBox from '../problem/ProblemAccessBox';
 
-interface SidebarProps {
-  children?: React.ReactNode;
-}
 
-export const Sidebar = ({ children }: SidebarProps) => {
+export const Sidebar = () => {
   const navigate = useNavigate();
   
   return (
@@ -27,6 +25,11 @@ export const Sidebar = ({ children }: SidebarProps) => {
               >
                 My Adventures
               </button>
+
+              <AdventureAccessBox/>
+
+              
+      
           </div>
 
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Single Problems</h3>
@@ -39,11 +42,14 @@ export const Sidebar = ({ children }: SidebarProps) => {
             Create Problem
           </button>
           <button
-            onClick={() => navigate("/attempt")}
+            onClick={() => navigate("/my-problems")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
           >
-            Attempt Problem
+            My Problems
           </button>
+   
+
+          <ProblemAccessBox/>
 
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Information</h3>
             <div className="space-y-2">
@@ -60,6 +66,8 @@ export const Sidebar = ({ children }: SidebarProps) => {
               >
                 Instructions
               </button>
+
+              
             </div>
 
   
@@ -67,15 +75,7 @@ export const Sidebar = ({ children }: SidebarProps) => {
    
       </div>
       
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Adventure Access Code: </h3>
-      <div className="space-y-2">
-
-      {children && (
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-          {children}
-        </div>
-      )}
-      </div>
+      
     </aside>
  
   );

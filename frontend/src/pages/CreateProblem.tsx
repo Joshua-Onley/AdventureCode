@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import ProblemForm from "../components/ProblemForm";
+import ProblemForm from "../components/shared/ProblemForm";
 import { useCreateProblem } from "../hooks/useCreateProblem";
 import type { ProblemBase } from "../components/shared/types";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
@@ -30,7 +30,7 @@ const CreateProblem = () => {
   });
   
   const [isPublic, setIsPublic] = useState(true);
-  const { submit, loading, error, success } = useCreateProblem();
+  const { submit, loading, error, success, reset } = useCreateProblem();
   
   const handleProblemChange = useCallback((newProblem: ProblemBase) => {
     if (!shouldBlockSave) setProblem(newProblem);
@@ -143,7 +143,7 @@ const CreateProblem = () => {
   }
 
   return (
-    <div className="create-problem-page">
+    <div className="create-problem-page p-6">
       {showTokenExpired && (
         <div className="token-expired-banner">
           <p>Your session has expired. Please re-authenticate.</p>
@@ -152,19 +152,24 @@ const CreateProblem = () => {
         </div>
       )}
       
-      <h1>Create New Problem</h1>
+       
       
       {success ? (
         <div className="success-message">
-          {success}
+          {success} 
+
           <button 
             onClick={() => {
-              setShouldBlockSave(false);
+              reset()
               resetProblemState();
+              setShouldBlockSave(false);
+              clearSavedData();
+              
+              
             }}
             className="button button-primary"
-          >
-            Create Another Problem
+          > 
+          Create Another Problem
           </button>
         </div>
       ) : (

@@ -30,6 +30,8 @@ export function useCreateProblem() {
       return;
     }
 
+    
+
     try {
       const resp = await createProblem(payload, token);
       console.log(resp.data.problem_id)
@@ -52,5 +54,13 @@ export function useCreateProblem() {
     }
   };
 
-  return { submit, loading, error, success };
+  const reset = () => {
+    setSuccess(null);
+    setError(null);
+  };
+
+
+
+
+  return { submit, loading, error, success, reset };
 }

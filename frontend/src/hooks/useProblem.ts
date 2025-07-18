@@ -12,6 +12,7 @@ export function useFetchProblem() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
+
   const load = async (accessCode: string) => {
     setLoading(true);
     setError(null);
@@ -35,15 +36,18 @@ export function useSubmitSolution() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const submit = async (args: { access_code: string; code: string; language: string }) => {
     setLoading(true);
     setError(null);
     setMessage(null);
+    setIsCorrect(null);
 
     try {
       const res = await submitSolution(args);
       setMessage(res.data.message ?? "Submitted successfully.");
+      setIsCorrect(res.data.is_correct ?? false);
     } catch (e) {
         const err = e as AxiosError;
         const data = err.response?.data as ErrorResponse | undefined;
@@ -53,5 +57,5 @@ export function useSubmitSolution() {
     }
   };
 
-  return { loading, error, message, submit };
+  return { loading, error, message,  isCorrect, submit };
 }

@@ -69,6 +69,7 @@ class Problem(Base):
     description = Column(Text, nullable=False)
     code_snippet = Column(Text, nullable=False) 
     expected_output = Column(Text, nullable=False)  
+    completions = Column(Integer, nullable = False)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
 

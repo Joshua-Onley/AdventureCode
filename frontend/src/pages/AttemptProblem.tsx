@@ -1,11 +1,16 @@
+
 import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useFetchProblem, useSubmitSolution } from "../hooks/useProblem";
+import CodeEditor from '../components/shared/CodeEditor';
 
 export default function AttemptProblem() {
-  const [accessCode, setAccessCode] = useState("");
+
+  const { code } = useParams<{ code: string }>();
+  const navigate = useNavigate();
+  
   const [solution, setSolution] = useState("");
   const [problemLoaded, setProblemLoaded] = useState(false);
-
   const {
     problem,
     loading: loadingProblem,
@@ -17,8 +22,18 @@ export default function AttemptProblem() {
     loading: loadingSubmit,
     error: submitError,
     message: submitMessage,
+    isCorrect,
     submit,
   } = useSubmitSolution();
+
+  useEffect(() => {
+    if (!code) {
+      navigate("/", { replace: true });
+      return;
+    }
+    setProblemLoaded(false);
+    loadProblem(code.trim().toLowerCase());
+  }, [code]);
 
   useEffect(() => {
     if (problem) {
@@ -27,99 +42,71 @@ export default function AttemptProblem() {
     }
   }, [problem]);
 
-  const onLoad = () => {
-    setProblemLoaded(false);
-    loadProblem(accessCode.trim().toLowerCase());
-  };
-
   const onSubmit = () => {
     if (!problem) return;
     submit({
-      access_code: accessCode.trim().toLowerCase(),
+      access_code: code!.trim().toLowerCase(),
       code: solution,
       language: problem.language,
     });
   };
 
-  const onCancel = () => {
-    setAccessCode("");
-    setProblemLoaded(false);
-  };
+  const onCancel = () => navigate("/");
 
   return (
-    <div>
-      <h2>Attempt a Problem</h2>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Attempt a Problem</h2>
 
       {!problemLoaded ? (
-        <div>
-          <div>
-            <label htmlFor="accessCode">
-              Enter Access Code:
-            </label>
-            <input
-              id="accessCode"
-              type="text"
-              placeholder="Enter access code"
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value)}
-              
-            />
-          </div>
-          
-          <div>
-            <button
-              onClick={onLoad}
-              disabled={loadingProblem || !accessCode.trim()}
-            >
-              {loadingProblem ? "Loading…" : "Load Problem"}
-            </button>
-          </div>
-          
-          {fetchError && <div className="error-message">{fetchError}</div>}
-        </div>
+        loadingProblem ? (
+          <p>Loading problem…</p>
+        ) : fetchError ? (
+          <p className="text-red-600">{fetchError}</p>
+        ) : null
       ) : problem ? (
-        <div>
-          <div>
-            <h3>{problem.title}</h3>
-            <p>Language: {problem.language}</p>
-          </div>
-          
-          <div>
-            <p>{problem.description}</p>
-          </div>
-          
-          <div>
-            <label>Complete the code:</label>
-            <div>
-              <pre>
-                {problem.code_snippet}
-              </pre>
-            </div>
-            <textarea
+        <>
+          <h3 className="text-xl font-semibold mb-2">{problem.title}</h3>
+          <p className="mb-4">Language: {problem.language}</p>
+          <p className="mb-4">{problem.description}</p>
+
+          <label className="block font-medium mb-1">Complete the code:</label>
+          <pre className="bg-gray-100 p-2 rounded mb-2">
+            {problem.code_snippet}
+          </pre>
+          <CodeEditor
               value={solution}
-              onChange={(e) => setSolution(e.target.value)}
-              placeholder="Add your solution code here..."
-              rows={10}
+              onChange={(newCode: string) => setSolution(newCode)}
+              language={problem.language}
+              height="200px"
+              placeholder="Enter your code here..."
+              theme="vs-light"
             />
-          </div>
-          
-          <div>
+
+          <div className="flex space-x-2">
             <button
               onClick={onSubmit}
               disabled={loadingSubmit}
-              
+              className="bg-blue-600 text-white px-4 py-2 rounded"
             >
               {loadingSubmit ? "Submitting…" : "Submit Solution"}
             </button>
-            <button onClick={onCancel} >
+            <button
+              onClick={onCancel}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+            >
               Cancel
             </button>
           </div>
-        </div>
+        </>
       ) : null}
 
-      {submitError && <div>{submitError}</div>}
-      {submitMessage && <div>{submitMessage}</div>}
+      {submitError && <p className="mt-4 text-red-600">{submitError}</p>}
+      {submitMessage && (
+        <p className={`mt-4 font-medium ${isCorrect ? "text-green-600" : "text-red-600"}`}>
+          {submitMessage}
+  </p>
+)}
+
     </div>
   );
 }

@@ -11,6 +11,7 @@ import ReactFlow, {
   type Edge,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
 import type { ProblemData, GraphNode, GraphEdge, AdventureAttempt } from "../components/shared/types";
@@ -248,111 +249,153 @@ const AttemptAdventure: React.FC = () => {
   };
 
   if (loading || !adventure || !attempt) {
-    return <div>Loading…</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
   }
 
   const node = currentNode();
-  if (!node) return <div>Node not found</div>;
+  if (!node) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-xl text-red-600">Node not found</div>
+      </div>
+    );
+  }
 
   const currentId = attempt?.current_node_id;
 
   return (
-    <div className="create-adventure-container">
-      <h2 className="text-2xl font-bold mb-4">{adventure.name}</h2>
+    <div className="flex flex-col h-screen">
       
-      {adventure.description && (
-        <div className="adventure-metadata">
-          <p>{adventure.description}</p>
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">{adventure.name}</h1>
+          {adventure.description && (
+            <p className="text-gray-300 mt-1">{adventure.description}</p>
+          )}
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Home
+          </button>
+        </div>
+      </div>
+
+      {attempt.completed && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <strong>Congratulations!</strong>
+          <div className="mt-2">You've completed the adventure!</div>
         </div>
       )}
 
-      <div className="flow-container" style={{ height: '500px' }}>
-        <ReactFlow
-          nodes={nodes.map((n) => ({
-            ...n,
-            data: {
-              ...n.data,
-              isCurrent: n.id === currentId,
-            },
-          }))}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          connectionLineType={ConnectionLineType.SmoothStep}
-          connectionMode={ConnectionMode.Loose}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          connectionRadius={30}
-        >
-          <Controls />
-          <MiniMap />
-          <Background gap={12} size={1} />
-        </ReactFlow>
-      </div>
+      <div className="flex-1 overflow-hidden">
+        <PanelGroup direction="horizontal">
+         
+          <Panel defaultSize={67} minSize={30} maxSize={80}>
+            <div className="h-full">
+              <ReactFlow
+                nodes={nodes.map((n) => ({
+                  ...n,
+                  data: {
+                    ...n.data,
+                    isCurrent: n.id === currentId,
+                  },
+                }))}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                fitView
+                connectionLineType={ConnectionLineType.SmoothStep}
+                connectionMode={ConnectionMode.Loose}
+                nodesDraggable={false}
+                nodesConnectable={false}
+                connectionRadius={30}
+              >
+                <Controls />
+                <MiniMap />
+                <Background gap={12} size={1} />
+              </ReactFlow>
+            </div>
+          </Panel>
 
-      <div className="problem-section">
-        <h3 className="text-xl font-semibold mb-2">{node.data.title}</h3>
-        <p className="mb-4">{node.data.description}</p>
+          
+          <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors cursor-col-resize" />
 
-        <div className="code-section">
-          <label className="block text-sm font-medium mb-2">
-            Your Code ({node.data.language}):
-          </label>
-          <textarea
-            className="w-full p-3 border border-gray-300 rounded-md font-mono text-sm"
-            placeholder="Write your code here..."
-            value={code}                            
-            onChange={(e) => setCode(e.target.value)}
-            rows={12}
-            style={{ resize: 'vertical' }}
-          />
-        </div>
+          
+          <Panel defaultSize={33} minSize={20} maxSize={70}>
+            <div className="h-full bg-white border-l border-gray-200 overflow-y-auto">
+              <div className="p-4">
+                
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold mb-2">{node.data.title}</h2>
+                  <p className="text-gray-700 mb-4">{node.data.description}</p>
+                </div>
 
-        <div className="action-buttons">
-          <button 
-            onClick={() => handleSubmit(code, node.data.language)}
-            className="button button-primary"
-          >
-            Run & Submit
-          </button>
-        </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    Your Code ({node.data.language}):
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Write your code here..."
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    rows={12}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
 
-        {output && (
-          <div className={`message ${
-            output.includes("Congratulations") || output.includes("correct") || output.includes("success") 
-              ? "message-success" 
-              : output.includes("Failed") || output.includes("error") || output.includes("incorrect")
-              ? "message-error"
-              : "message-info"
-          }`}>
-            <strong>Result:</strong>
-            <pre style={{ whiteSpace: 'pre-wrap', marginTop: '8px' }}>{output}</pre>
-          </div>
-        )}
+                <button 
+                  onClick={() => handleSubmit(code, node.data.language)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+                >
+                  Run & Submit
+                </button>
 
-        {attempt.completed && (
-          <div className="message message-success">
-            <strong>Congratulations!</strong>
-            <p>You've completed the adventure!</p>
-          </div>
-        )}
-      </div>
-
-      <div className="legend">
-        <p className="font-bold">Transition Types:</p>
-        <p>
-          <span className="color-indicator bg-green-500"></span>
-          <strong>Green:</strong> Correct path (solid) &nbsp;
-          <span className="color-indicator bg-red-500"></span>
-          <strong>Red:</strong> Incorrect path (solid) &nbsp;
-          <span className="color-indicator bg-gray-400"></span>
-          <strong>Grey:</strong> Default path (solid)
-        </p>
-        <p className="mt-2">
-          <span className="color-indicator" style={{ backgroundColor: '#ffd700' }}></span>
-          <strong>Blue Node:</strong> Current problem
-        </p>
+                {output && (
+                  <div className={`p-4 rounded-lg mb-4 ${
+                    output.includes("Congratulations") || output.includes("correct") || output.includes("success") 
+                      ? "bg-green-100 border border-green-400 text-green-700" 
+                      : output.includes("Failed") || output.includes("error") || output.includes("incorrect")
+                      ? "bg-red-100 border border-red-400 text-red-700"
+                      : "bg-blue-100 border border-blue-400 text-blue-700"
+                  }`}>
+                    <strong>Result:</strong>
+                    <pre className="whitespace-pre-wrap mt-2 text-sm">{output}</pre>
+                  </div>
+                )}
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-bold mb-2">Legend:</h3>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center">
+                      <div className="w-4 h-1 bg-green-500 mr-2"></div>
+                      <span><strong>Green:</strong> Correct path</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-1 bg-red-500 mr-2"></div>
+                      <span><strong>Red:</strong> Incorrect path</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-4 h-1 bg-gray-400 mr-2"></div>
+                      <span><strong>Grey:</strong> Default path</span>
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                      <span><strong>Blue Node:</strong> Current problem</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );

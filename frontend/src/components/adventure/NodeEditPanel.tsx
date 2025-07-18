@@ -1,5 +1,5 @@
 import React from 'react';
-import CodeEditor from '../CodeEditor';
+import CodeEditor from '../shared/CodeEditor';
 import type { Node } from 'reactflow';
 import type { ProblemData } from '../shared/types';
 

@@ -21,6 +21,7 @@ export interface Problem {
 
 export interface SubmissionResponse {
     message?: string;
+    is_correct?: boolean;
   }
 
 const BASE = import.meta.env.VITE_API_URL;
