@@ -16,12 +16,12 @@ const MyAdventures: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 
         const response = await axios.get<Adventure[]>(
-          `${FASTAPI_BACKEND_URL}/adventures/`,
+          `${FASTAPI_BACKEND_URL}/api/adventures/`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -50,7 +50,7 @@ const MyAdventures: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${FASTAPI_BACKEND_URL}/adventures/${adventureId}`, {
+      await axios.delete(`${FASTAPI_BACKEND_URL}/api/adventures/${adventureId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

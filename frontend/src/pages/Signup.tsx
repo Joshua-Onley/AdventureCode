@@ -24,7 +24,7 @@ export default function Signup() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        `${FASTAPI_BACKEND_URL}/signup`,
+        `${FASTAPI_BACKEND_URL}/api/signup`,
         new URLSearchParams(formData),
         {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -42,7 +42,7 @@ export default function Signup() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Sign Up</h2>
+      <h2>Sign Up Page</h2>
       <input
         type="text"
         name="name"

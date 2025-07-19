@@ -26,7 +26,7 @@ const Me: React.FC = () => {
       }
 
       try {
-        const response = await fetch(`${FASTAPI_BACKEND_URL}/me`, {
+        const response = await fetch(`${FASTAPI_BACKEND_URL}/api/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ const Me: React.FC = () => {
     };
 
     fetchUserData();
-  }, [navigate]);  
+  }, [navigate, error]);  
 
   if (loading) return <div>Loading user data...</div>;
   

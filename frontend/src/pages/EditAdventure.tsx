@@ -82,7 +82,7 @@ const EditAdventure: React.FC = () => {
         }
 
         const response = await axios.get(
-          `${FASTAPI_BACKEND_URL}/adventures/${id}`,
+          `${FASTAPI_BACKEND_URL}/api/adventures/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -202,7 +202,7 @@ const EditAdventure: React.FC = () => {
       };
 
       await axios.put(
-        `${FASTAPI_BACKEND_URL}/adventures/${id}`,
+        `${FASTAPI_BACKEND_URL}/api/adventures/${id}`,
         payload,
         {
           headers: {

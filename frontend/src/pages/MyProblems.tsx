@@ -34,12 +34,12 @@ const MyProblems: React.FC = () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          navigate("/login");
+          navigate("/login", { replace: true });
           return;
         }
 
         const response = await axios.get<Problem[]>(
-          `${FASTAPI_BACKEND_URL}/problems/`,
+          `${FASTAPI_BACKEND_URL}/api/problems/`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -66,7 +66,7 @@ const MyProblems: React.FC = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${FASTAPI_BACKEND_URL}/problems/${problemId}`, {
+      await axios.delete(`${FASTAPI_BACKEND_URL}/api/problems/${problemId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

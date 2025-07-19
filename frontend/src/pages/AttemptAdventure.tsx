@@ -55,13 +55,14 @@ const AttemptAdventure: React.FC = () => {
   useEffect(() => {
     if (!accessCode) return;
     const token = localStorage.getItem("token");
-
+  
     if (!token) {
       navigate("/login", { replace: true });
+      return;
     }
-
+  
     axios.get<Adventure>(
-      `${FASTAPI_BACKEND_URL}/adventures/access/${accessCode}`,
+      `${FASTAPI_BACKEND_URL}/api/adventures/access/${accessCode}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
       .then((res) => {
@@ -73,7 +74,7 @@ const AttemptAdventure: React.FC = () => {
             problemsMap.set(problem.id, problem);
           });
         }
-
+  
         const newNodes = res.data.graph_data.nodes.map((n) => {
           const problemData = problemsMap.get(n.id) || n.data;
           return {
@@ -86,7 +87,7 @@ const AttemptAdventure: React.FC = () => {
             }
           };
         });
-
+  
         setNodes(newNodes);
         setEdges(
           res.data.graph_data.edges.map((e) => ({
@@ -102,63 +103,51 @@ const AttemptAdventure: React.FC = () => {
         console.error("Failed to fetch adventure:", err);
         setAdventure(null);
         setLoading(false);
-        
       });
   }, [accessCode, navigate]);
-
+  
   useEffect(() => {
-    if (!adventure) return;
+    if (!adventure?.id) return;
+    
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login", { replace: true });
+      return;
     }
-
-   
+  
     axios
-      .get<AdventureAttempt[]>(`${FASTAPI_BACKEND_URL}/attempts?adventure_id=${adventure.id}`, {
+      .get<AdventureAttempt>(`${FASTAPI_BACKEND_URL}/api/adventures/${adventure.id}/attempt`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(response => {
-        const attempts = response.data;
-        const inProgressAttempt = attempts.find(a => !a.completed);
-        
-        if (inProgressAttempt) {
-          setAttempt(inProgressAttempt);
-          setLoading(false);
-
-          if (inProgressAttempt.current_node_id) {
-            const nodeEntries = inProgressAttempt.path_taken
-              .filter(entry => entry.node_id === inProgressAttempt.current_node_id && entry.code);
-
-            if (nodeEntries.length > 0) {
-              setCode(nodeEntries[nodeEntries.length - 1].code || "");
-            } else {
-              const currentNode = nodes.find(n => n.id === inProgressAttempt.current_node_id);
-              if (currentNode) {
-                setCode(currentNode.data.code_snippet);
-              }
-            }
-          }
-        } else {
-          
-          axios
-            .post<AdventureAttempt>(
-              `${FASTAPI_BACKEND_URL}/adventures/${adventure.id}/attempt`,
-              {},
-              { headers: { Authorization: `Bearer ${token}` } }
-            )
-            .then((res) => {
-              setAttempt(res.data);
-              const startNode = nodes.find(n => n.id === res.data.current_node_id);
-              if (startNode) {
-                setCode(startNode.data.code_snippet);
-              }
-            })
-            .finally(() => setLoading(false));
-        }
+        const attempt = response.data;
+        setAttempt(attempt);
+        setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, [adventure, nodes, navigate]);
+      .catch((err) => {
+        console.error("Failed to get/start adventure attempt:", err);
+        setLoading(false);
+      });
+  }, [adventure?.id, navigate]);
+  
+
+  useEffect(() => {
+    if (!attempt || !nodes.length) return;
+  
+    if (attempt.current_node_id) {
+      const nodeEntries = attempt.path_taken
+        ?.filter(entry => entry.node_id === attempt.current_node_id && entry.code) || [];
+  
+      if (nodeEntries.length > 0) {
+        setCode(nodeEntries[nodeEntries.length - 1].code || "");
+      } else {
+        const currentNode = nodes.find(n => n.id === attempt.current_node_id);
+        if (currentNode && currentNode.data.code_snippet) {
+          setCode(currentNode.data.code_snippet);
+        }
+      }
+    }
+  }, [attempt, nodes]);
 
   const currentNode = useCallback(() => {
     if (!nodes.length || !attempt) return null;
@@ -178,7 +167,7 @@ const AttemptAdventure: React.FC = () => {
     
     try {
       const run = await axios.post(
-        `${FASTAPI_BACKEND_URL}/adventure_submissions`,
+        `${FASTAPI_BACKEND_URL}/api/adventure_submissions`,
         form,
         {
           headers: {
@@ -223,7 +212,7 @@ const AttemptAdventure: React.FC = () => {
   
       if (nextNodeId) {
         const progress = await axios.patch<AdventureAttempt>(
-          `${FASTAPI_BACKEND_URL}/attempts/${attempt.id}/progress`,
+          `${FASTAPI_BACKEND_URL}/api/adventures/attempts/${attempt.id}/progress`,
           {
             current_node_id: nextNodeId,
             outcome: outcome,

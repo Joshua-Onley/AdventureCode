@@ -16,7 +16,7 @@ const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
   
     try {
       const response = await axios.post(
-        `${FASTAPI_BACKEND_URL}/adventures/`,
+        `${FASTAPI_BACKEND_URL}/api/adventures/`,
         adventureData,             
         {
           headers: {
@@ -48,7 +48,7 @@ export const startAdventureAttempt = async (adventureId: number) => {
   if (!token) throw new Error("Authentication required");
 
   const response = await axios.post(
-    `${FASTAPI_BACKEND_URL}/adventure-attempts`,
+    `${FASTAPI_BACKEND_URL}/api/adventure-attempts`,
     { adventure_id: adventureId },
     {
       headers: {
@@ -68,7 +68,7 @@ export const updateAdventureAttempt = async (
   if (!token) throw new Error("Authentication required");
 
   const response = await axios.put(
-    `${FASTAPI_BACKEND_URL}/adventure-attempts/${attemptId}`,
+    `${FASTAPI_BACKEND_URL}/api/adventure-attempts/${attemptId}`,
     { current_node_id, completed },
     {
       headers: {
@@ -80,12 +80,12 @@ export const updateAdventureAttempt = async (
 };
 
 export const getAdventure = async (id: number) => {
-  const response = await axios.get(`${FASTAPI_BACKEND_URL}/adventures/${id}`);
+  const response = await axios.get(`${FASTAPI_BACKEND_URL}/api/adventures/${id}`);
   return response.data;
 };
 
 export const getPublicAdventures = async (): Promise<Adventure[]> => {
-  const response = await axios.get<PublicAdventuresResponse>(`${FASTAPI_BACKEND_URL}/adventures/public`);
+  const response = await axios.get<PublicAdventuresResponse>(`${FASTAPI_BACKEND_URL}/api/adventures/public`);
   console.log("fetching public adventures from adventure.ts file", response);
   return response.data.adventures;
 };
@@ -95,7 +95,7 @@ export const getUserAdventures = async (userId: number) => {
   if (!token) throw new Error("Authentication required");
   
   const response = await axios.get(
-    `${FASTAPI_BACKEND_URL}/adventures/user/${userId}`,
+    `${FASTAPI_BACKEND_URL}/api/adventures/user/${userId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -110,7 +110,7 @@ export const getAdventureAttempt = async (attemptId: number) => {
   if (!token) throw new Error("Authentication required");
   
   const response = await axios.get(
-    `${FASTAPI_BACKEND_URL}/adventure-attempts/${attemptId}`,
+    `${FASTAPI_BACKEND_URL}/api/adventure-attempts/${attemptId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

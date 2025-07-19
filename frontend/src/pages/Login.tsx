@@ -43,7 +43,7 @@ export default function Login() {
       params.append("grant_type", "password");
 
       const res = await axios.post<LoginSuccessResponse>(
-        `${FASTAPI_BACKEND_URL}/login`,
+        `${FASTAPI_BACKEND_URL}/api/login`,
         params,
         {
           headers: {

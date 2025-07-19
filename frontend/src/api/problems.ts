@@ -40,7 +40,7 @@ export async function createProblem(
   });
 
   return axios.post(
-    `${BASE}/problems`,
+    `${BASE}/api/problems`,
     data,
     {
       headers: {
@@ -52,7 +52,7 @@ export async function createProblem(
 }
 
 export function fetchProblemByCode(accessCode: string) {
-    return axios.get<Problem>(`${BASE}/problems/access/${accessCode}`);
+    return axios.get<Problem>(`${BASE}/api/problems/access/${accessCode}`);
   }
 
   
@@ -67,7 +67,7 @@ export function fetchProblemByCode(accessCode: string) {
     data.append("language", form.language);
   
     return axios.post<SubmissionResponse>(
-      `${BASE}/submissions`,
+      `${BASE}/api/submissions`,
       data,
       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
