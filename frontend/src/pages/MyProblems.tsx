@@ -39,7 +39,7 @@ const MyProblems: React.FC = () => {
         }
 
         const response = await axios.get<Problem[]>(
-          `${FASTAPI_BACKEND_URL}/api/problems/`,
+          `${FASTAPI_BACKEND_URL}/api/problems`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
