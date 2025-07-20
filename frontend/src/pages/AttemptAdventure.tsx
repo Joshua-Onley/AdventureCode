@@ -319,7 +319,7 @@ const AttemptAdventure: React.FC = () => {
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
-                connectionLineType={ConnectionLineType.SmoothStep}
+                connectionLineType={ConnectionLineType.Bezier}
                 connectionMode={ConnectionMode.Loose}
                 nodesDraggable={false}
                 nodesConnectable={false}

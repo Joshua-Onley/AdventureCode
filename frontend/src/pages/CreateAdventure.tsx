@@ -428,7 +428,7 @@ const CreateAdventure = () => {
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 fitView
-                connectionLineType={ConnectionLineType.SmoothStep}
+                connectionLineType={ConnectionLineType.Bezier}
                 connectionMode={ConnectionMode.Loose}
                 connectionRadius={30}
               >

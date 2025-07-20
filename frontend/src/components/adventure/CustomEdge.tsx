@@ -1,4 +1,4 @@
-import { BaseEdge, getSmoothStepPath, type EdgeProps } from "reactflow";
+import { BaseEdge, getBezierPath, type EdgeProps } from "reactflow";
 
 const CustomEdge = (props: EdgeProps) => {
   const {
@@ -12,7 +12,8 @@ const CustomEdge = (props: EdgeProps) => {
     data,
   } = props;
   
-  const [edgePath] = getSmoothStepPath({
+
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     targetX,
@@ -35,6 +36,7 @@ const CustomEdge = (props: EdgeProps) => {
         style={{
           stroke: edgeColor,
           strokeWidth: 3,
+          strokeLinecap: "round", 
         }}
       />
       <path
