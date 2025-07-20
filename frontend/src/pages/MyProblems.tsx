@@ -47,8 +47,8 @@ const MyProblems: React.FC = () => {
         console.log(response.data)
         setProblems(response.data);
       } catch (err) {
-        setError("Failed to fetch adventures");
-        console.error("Error fetching adventures:", err);
+        setError("Failed to fetch problems");
+        console.error("Error fetching problems:", err);
       } finally {
         setLoading(false);
       }

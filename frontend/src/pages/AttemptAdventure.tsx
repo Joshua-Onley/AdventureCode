@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ReactFlow, {
@@ -14,6 +14,8 @@ import "reactflow/dist/style.css";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
+import EdgeLegend from "../components/adventure/EdgeLegend";
+import CodeEditor from "../components/shared/CodeEditor";
 import type { ProblemData, GraphNode, GraphEdge, AdventureAttempt } from "../components/shared/types";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
@@ -49,8 +51,12 @@ const AttemptAdventure: React.FC = () => {
   const [nodes, setNodes] = useState<Node<ProblemData>[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [code, setCode] = useState<string>("");
-  const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [output, setOutput] = useState<string>("");
+  const [submissionStatus, setSubmissionStatus] = useState<'incorrect' | 'correct' | 'info'| null>(null);
+  
+  
+  const previousNodeId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!accessCode) return;
@@ -133,19 +139,23 @@ const AttemptAdventure: React.FC = () => {
 
   useEffect(() => {
     if (!attempt || !nodes.length) return;
-  
-    if (attempt.current_node_id) {
+    
+    const currentNodeId = attempt.current_node_id;
+    
+    if (currentNodeId && (previousNodeId.current !== currentNodeId || previousNodeId.current === null)) {
       const nodeEntries = attempt.path_taken
-        ?.filter(entry => entry.node_id === attempt.current_node_id && entry.code) || [];
-  
+        ?.filter(entry => entry.node_id === currentNodeId && entry.code) || [];
+
       if (nodeEntries.length > 0) {
         setCode(nodeEntries[nodeEntries.length - 1].code || "");
       } else {
-        const currentNode = nodes.find(n => n.id === attempt.current_node_id);
+        const currentNode = nodes.find(n => n.id === currentNodeId);
         if (currentNode && currentNode.data.code_snippet) {
           setCode(currentNode.data.code_snippet);
         }
       }
+      
+      previousNodeId.current = currentNodeId;
     }
   }, [attempt, nodes]);
 
@@ -179,6 +189,13 @@ const AttemptAdventure: React.FC = () => {
   
       const isCorrect = run.data.is_correct;
       setOutput(run.data.message);
+
+      if (isCorrect) {
+        setSubmissionStatus('correct');
+      } else {
+        setSubmissionStatus('incorrect')
+      }
+
       const outcome = isCorrect ? "correct" : "incorrect";
   
       const isEndNode = node.id === adventure?.end_node_id;
@@ -209,7 +226,7 @@ const AttemptAdventure: React.FC = () => {
           nextNodeId = node.id;
         }
       }
-  
+
       if (nextNodeId) {
         const progress = await axios.patch<AdventureAttempt>(
           `${FASTAPI_BACKEND_URL}/api/adventures/attempts/${attempt.id}/progress`,
@@ -221,16 +238,18 @@ const AttemptAdventure: React.FC = () => {
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
+      
         setAttempt(progress.data);
-    
-        if (nextNodeId !== node.id && !adventureCompleted) {
+      
+        
+        if (isCorrect && nextNodeId !== node.id && !adventureCompleted) {
           const nextNode = nodes.find(n => n.id === nextNodeId);
-          if (nextNode) {
+          if (nextNode && nextNode.data.code_snippet) {
             setCode(nextNode.data.code_snippet);
           }
         }
       }
+  
     } catch (err) {
       console.error("Submission failed:", err);
       setOutput("Failed to submit solution. Please try again.");
@@ -330,15 +349,17 @@ const AttemptAdventure: React.FC = () => {
                   <label className="block text-sm font-medium mb-2">
                     Your Code ({node.data.language}):
                   </label>
-                  <textarea
-                    className="w-full p-3 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <CodeEditor
+                    
                     placeholder="Write your code here..."
                     value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    rows={12}
-                    style={{ resize: 'vertical' }}
+                    onChange={(value) => setCode(value)}
+                    language="text"
+                    height="100px"
+                    theme="vs-light"
                   />
                 </div>
+                
 
                 <button 
                   onClick={() => handleSubmit(code, node.data.language)}
@@ -348,41 +369,21 @@ const AttemptAdventure: React.FC = () => {
                 </button>
 
                 {output && (
-                  <div className={`p-4 rounded-lg mb-4 ${
-                    output.includes("Congratulations") || output.includes("correct") || output.includes("success") 
-                      ? "bg-green-100 border border-green-400 text-green-700" 
-                      : output.includes("Failed") || output.includes("error") || output.includes("incorrect")
+                    <div className={`p-4 rounded-lg mb-4 ${
+                      submissionStatus === 'correct'
+                      ? "bg-green-100 border border-green-400 text-green-700"
+                      : submissionStatus === 'incorrect'
                       ? "bg-red-100 border border-red-400 text-red-700"
                       : "bg-blue-100 border border-blue-400 text-blue-700"
-                  }`}>
-                    <strong>Result:</strong>
-                    <pre className="whitespace-pre-wrap mt-2 text-sm">{output}</pre>
-                  </div>
-                )}
+                    }`}>
+                      <strong>Result:</strong>
+                      <pre className="whitespace-pre-wrap mt-2 text-sm">{output}</pre>
+                    </div>
+                  )}
                 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-bold mb-2">Legend:</h3>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex items-center">
-                      <div className="w-4 h-1 bg-green-500 mr-2"></div>
-                      <span><strong>Green:</strong> Correct path</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-1 bg-red-500 mr-2"></div>
-                      <span><strong>Red:</strong> Incorrect path</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-1 bg-gray-400 mr-2"></div>
-                      <span><strong>Grey:</strong> Default path</span>
-                    </div>
-                    <div className="flex items-center mt-2">
-                      <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                      <span><strong>Blue Node:</strong> Current problem</span>
-                    </div>
-                  </div>
+                <EdgeLegend/>
                 </div>
-              </div>
-            </div>
+                </div>
           </Panel>
         </PanelGroup>
       </div>

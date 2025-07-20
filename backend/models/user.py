@@ -13,14 +13,10 @@ class User(Base):
     email = Column(String, unique=True, nullable=True)
     password_hash = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-
     created_adventures = relationship("Adventure", back_populates="creator", foreign_keys="Adventure.creator_id")
     attempts = relationship("AdventureAttempt", back_populates="user", foreign_keys="AdventureAttempt.user_id")
     leaderboard_entries = relationship("Leaderboard", back_populates="user", foreign_keys="Leaderboard.user_id")
     problems = relationship("Problem", back_populates="creator", foreign_keys="Problem.creator_id")
-    
-
     achievements = relationship("UserAchievement", back_populates="user")
     badges = relationship("UserBadge", back_populates="user")
     adventures_approved = relationship("Adventure", back_populates="approved", foreign_keys="Adventure.approved_by")

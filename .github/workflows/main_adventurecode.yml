@@ -34,6 +34,12 @@ jobs:
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
+      - name: Run test suite
+        working-directory: backend
+        run: |
+          source ../venv/bin/activate
+          pytest --maxfail=1 --disable-warnings -v
+
       - name: Zip artifact for deployment
         run: |
           cd backend

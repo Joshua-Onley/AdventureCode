@@ -3,3 +3,5 @@ __pycache__/
 .azure
 *.pyc
 .env
+requirements-backup.txt
+

@@ -16,7 +16,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   onChange,
   language,
   height = '300px',
-  theme = 'vs-dark',
+  theme = 'vs-light',
   placeholder,
   readOnly = false
 }) => {
@@ -25,10 +25,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden">
-      <div className="bg-gray-800 text-white text-sm px-3 py-2 flex items-center justify-between">
-        <span className="font-mono">{language}</span>
-        <span className="text-gray-400 text-xs">
+    <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+      <div className="bg-gray-50 text-gray-700 text-sm px-3 py-2 flex items-center justify-between border-b border-gray-200">
+        <span className="font-mono font-medium">{language}</span>
+        <span className="text-gray-500 text-xs">
           {readOnly ? 'Read Only' : 'Editable'}
         </span>
       </div>
@@ -60,7 +60,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           bracketPairColorization: {
             enabled: true
           },
-          
           quickSuggestions: {
             other: true,
             comments: false,
