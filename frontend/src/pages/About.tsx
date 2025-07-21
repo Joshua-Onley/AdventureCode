@@ -8,8 +8,8 @@ export default function About() {
           <p className="text-xl text-gray-700">Empowering teachers to craft tailored coding challenges and learning pathways for students.</p>
           <div className="mt-6">
             <img
-              src="/public/images/graph.png"
-              alt="Screenshot of CodeQuest graph canvas"
+              src="/images/graph.png"
+              alt="Screenshot of AdventureCode graph canvas"
               className="mx-auto rounded-lg shadow-lg border border-gray-200"
             />
           </div>
