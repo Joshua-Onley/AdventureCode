@@ -12,6 +12,7 @@ import AdventureDetail from "./components/adventure/AdventureDetail"
 import AttemptAdventure from "./pages/AttemptAdventure";
 import EditAdventure from "./pages/EditAdventure";
 import MyProblems from "./pages/MyProblems";
+import Instructions from "./pages/Instructions";
 
 const App: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
+        <Route path="/instructions" element={<Instructions />} />
         <Route path="/me" element={<Me />} />
         <Route path="/problems/access/:code" element={<AttemptProblem />} />
         <Route path="/problems" element={<CreateProblem />} />
@@ -31,6 +33,7 @@ const App: React.FC = () => {
         <Route path="/adventures/edit/:id" element={<EditAdventure />} />
         <Route path="/adventures/:id" element={<AdventureDetail />} />
         <Route path="/adventures/access/:code" element={<AttemptAdventure />} />
+
         
  
       </Routes>

@@ -52,6 +52,7 @@ const AttemptAdventure: React.FC = () => {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [code, setCode] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Add error state
   const [output, setOutput] = useState<string>("");
   const [submissionStatus, setSubmissionStatus] = useState<'incorrect' | 'correct' | 'info'| null>(null);
   
@@ -73,6 +74,7 @@ const AttemptAdventure: React.FC = () => {
     )
       .then((res) => {
         setAdventure(res.data);
+        setError(null); 
         
         const problemsMap = new Map<string, ProblemData>();
         if (res.data.problems) {
@@ -109,6 +111,15 @@ const AttemptAdventure: React.FC = () => {
         console.error("Failed to fetch adventure:", err);
         setAdventure(null);
         setLoading(false);
+        
+        
+        if (err.response?.status === 404) {
+          setError("Adventure not found. Please check the access code and try again.");
+        } else if (err.response?.status === 401 || err.response?.status === 403) {
+          setError("Access denied. Please check your permissions.");
+        } else {
+          setError("Failed to load adventure. Please try again later.");
+        }
       });
   }, [accessCode, navigate]);
   
@@ -133,6 +144,7 @@ const AttemptAdventure: React.FC = () => {
       .catch((err) => {
         console.error("Failed to get/start adventure attempt:", err);
         setLoading(false);
+        setError("Failed to start adventure attempt. Please try again.");
       });
   }, [adventure?.id, navigate]);
   
@@ -255,6 +267,27 @@ const AttemptAdventure: React.FC = () => {
       setOutput("Failed to submit solution. Please try again.");
     }
   };
+
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-md text-center">
+          <strong>Error:</strong>
+          <div className="mt-2">{error}</div>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Go Home
+          </button>
+
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !adventure || !attempt) {
     return (

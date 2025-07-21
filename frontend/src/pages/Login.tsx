@@ -57,12 +57,9 @@ export default function Login() {
         throw new Error("No access token received");
       }
 
-     
       localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("userId", res.data.user.id.toString());
-      localStorage.setItem("userName", formData.username); 
-    
-
+      localStorage.setItem("userName", formData.username);
       setMessage("Login successful");
       console.log("User data:", res.data.user);
       navigate('/');
@@ -87,26 +84,53 @@ export default function Login() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Log In</h2>
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        value={formData.username}
-        onChange={handleChange}
-        required
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        required
-      />
-      <button type="submit">Log In</button>
-      {message && <p className="text-sm text-red-500">{message}</p>}
-    </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Log In</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="sr-only">Username</label>
+            <input
+              id="username"
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="sr-only">Password</label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+          >
+            Log In
+          </button>
+          {message && <p className="text-sm text-red-500 mt-4 text-center">{message}</p>}
+        </form>
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <button
+            onClick={() => navigate("/")}
+            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition-colors"
+          >
+            Continue as Guest
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

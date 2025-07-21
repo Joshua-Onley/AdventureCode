@@ -51,7 +51,7 @@ export const Sidebar = () => {
             About
           </button>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/instructions")}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-left"
           >
             Instructions

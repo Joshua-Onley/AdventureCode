@@ -18,8 +18,6 @@ const Me: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
-      
-      
       if (!token) {
         navigate('/login', { replace: true });
         return;
@@ -34,7 +32,6 @@ const Me: React.FC = () => {
         });
 
         if (response.status === 401) {
-          
           localStorage.removeItem('token');
           navigate('/login');
           return;
@@ -45,7 +42,6 @@ const Me: React.FC = () => {
         }
 
         const data = await response.json();
-        
         if (data.id && data.username) {
           setUser(data);
         } else {
@@ -54,8 +50,7 @@ const Me: React.FC = () => {
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch user data');
-        console.log(error)
-        
+        console.log(error);
         localStorage.removeItem('token');
         navigate('/login');
       } finally {
@@ -64,24 +59,42 @@ const Me: React.FC = () => {
     };
 
     fetchUserData();
-  }, [navigate, error]);  
+  }, [navigate, error]);
 
-  if (loading) return <div>Loading user data...</div>;
-  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200 text-center text-gray-700">
+          Loading user data...
+        </div>
+      </div>
+    );
+  }
 
   return user ? (
-    <div>
-      <h2>
-        Welcome, {user.name || user.username || 'Guest'}
-      </h2>
-      <div>
-        <p>User ID: {user.id}</p>
-        <p>Username: {user.username}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          Username: {user.name || user.username || 'Guest'}
+        </h2>
+        <div className="space-y-2 text-gray-700">
+          <p>
+            <span className="font-semibold">User ID:</span> {user.id}
+          </p>
+          <p>
+            <span className="font-semibold">Username:</span> {user.username}
+          </p>
+          <p>
+            <span>TODO: Add more user statistics here</span>
+          </p>
+        </div>
       </div>
     </div>
   ) : (
-    <div>
-      <p>Redirecting to login page...</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200 text-center text-gray-700">
+        <p>Redirecting to login page...</p>
+      </div>
     </div>
   );
 };

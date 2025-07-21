@@ -17,7 +17,7 @@ export const useMessages = () => {
     showMessage(error, timeout);
   }, [showMessage]);
 
-  const showSuccess = useCallback((successMsg: string, timeout: number = 500) => {
+  const showSuccess = useCallback((successMsg: string, timeout: number = 3000) => {
     showMessage(successMsg, timeout);
   }, [showMessage]);
 

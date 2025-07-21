@@ -11,7 +11,7 @@ export function Header({ currentUsername, handleLogout }: HeaderProps) {
   return (
     <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
       <div>
-        <h1 className="text-2xl font-bold">Learning Adventures</h1>
+        <h1 className="text-2xl font-bold">Coding Adventures</h1>
         {currentUsername && (
           <p className="text-gray-300 text-sm">
             Welcome back, {currentUsername}!

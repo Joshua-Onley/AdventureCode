@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import axios from 'axios';
 import type { Node, Edge } from 'reactflow';
 import type { AdventureCreate, NodeData as SharedNodeData, EdgeData as SharedEdgeData, ProblemBase } from '../components/shared/types';
@@ -11,46 +11,44 @@ interface UseAdventureSaveProps {
   validateGraph: (nodes: Node[], edges: Edge[]) => string | null;
   clearSavedData: () => void;
   setShouldBlockSave: (value: boolean) => void;
-
   showError: (msg: string, timeoutMs?: number) => void;
   showSuccess: (msg: string) => void;
   showTokenExpiredMessage: () => void;
 }
 
-export const useAdventureSave = ({ 
-  nodes, 
-  edges, 
-  validateGraph, 
-  clearSavedData, 
-  setShouldBlockSave 
+export const useAdventureSave = ({
+  nodes,
+  edges,
+  validateGraph,
+  clearSavedData,
+  setShouldBlockSave,
+  showError,        
+  showSuccess,    
+  showTokenExpiredMessage  
 }: UseAdventureSaveProps) => {
-  const [message, setMessage] = useState("");
-  const [showTokenExpired, setShowTokenExpired] = useState(false);
-
   const handleSaveAdventure = useCallback(async (
-    adventureTitle: string, 
+    adventureTitle: string,
     adventureDescription: string
   ) => {
     const token = getStoredToken();
-    
     if (!token || isTokenExpired(token)) {
-      setShowTokenExpired(true);
+      showTokenExpiredMessage();
       return;
     }
-    
+
     if (!adventureTitle.trim()) {
-      setMessage("Adventure title is required");
+      showError("Adventure title is required");
       return;
     }
 
     if (nodes.length === 0) {
-      setMessage("Add at least one problem to the adventure");
+      showError("Add at least one problem to the adventure");
       return;
     }
 
     const graphError = validateGraph(nodes, edges);
     if (graphError) {
-      setMessage(graphError);
+      showError(graphError);
       return;
     }
 
@@ -77,17 +75,13 @@ export const useAdventureSave = ({
         is_public: false,
         request_public: false,
       };
-    
-      await createAdventure(payload);
 
-      setMessage("Adventure created successfully!");
-      setShouldBlockSave(true);
+      await createAdventure(payload);
+      
+      showSuccess("Adventure created successfully!");
+      setShouldBlockSave(false); 
       clearSavedData();
       
-      setTimeout(() => {
-        setMessage("");
-      }, 500);
-
     } catch (error) {
       let errorMessage = "Something went wrong. Try again later.";
       if (error instanceof Error) {
@@ -101,27 +95,13 @@ export const useAdventureSave = ({
           errorMessage = error.message;
         }
       }
-
-      setMessage(errorMessage);
+      
+      showError(errorMessage); 
       console.error("Error creating adventure:", error);
     }
-  }, [nodes, edges, validateGraph, clearSavedData, setShouldBlockSave]);
-
-  const clearMessage = useCallback(() => {
-    setMessage("");
-  }, []);
-
-  const clearMessages = useCallback(() => {
-    setMessage("");
-    setShowTokenExpired(false);
-  }, []);
+  }, [nodes, edges, validateGraph, clearSavedData, setShouldBlockSave, showError, showSuccess, showTokenExpiredMessage]);
 
   return {
-    message,
-    showTokenExpired,
     handleSaveAdventure,
-    clearMessage,
-    clearMessages,
-    setShowTokenExpired,
   };
 };
