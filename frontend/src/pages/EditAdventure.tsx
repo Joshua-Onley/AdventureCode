@@ -16,6 +16,7 @@ import CustomEdge from "../components/adventure/CustomEdge";
 import NodeEditPanel from "../components/adventure/NodeEditPanel";
 import { useAdventureGraph } from "../hooks/useAdventureGraph";
 import type { ProblemData, GraphEdge, GraphNode, NodeData, EdgeData } from "../components/shared/types";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
@@ -301,92 +302,97 @@ const EditAdventure: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-3/4 h-full">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeClick={handleNodeClick}
-            onEdgeClick={handleEdgeClick}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-           
-          >
-            <Controls />
-            <MiniMap />
-            <Background gap={12} size={1} />
-          </ReactFlow>
-        </div>
-        
-        <div className="w-1/4 bg-white p-4 border-l border-gray-200 overflow-y-auto">
-          <div className="mb-4">
-            <button
-              onClick={handleAddNode}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2"
+      <div className="flex-1 overflow-hidden">
+        <PanelGroup direction="horizontal">
+          <Panel defaultSize={75} minSize={30} maxSize={80} className="h-full">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              onEdgeClick={handleEdgeClick}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              fitView
             >
-              Add New Problem Node
-            </button>
-          </div>
-          
-          {selectedNode ? (
-            <NodeEditPanel
-              node={selectedNode}
-              onUpdate={updateNodeData}
-              onDelete={handleDeleteNode}
-            />
-          ) : selectedEdge ? (
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h2 className="text-xl font-bold mb-4">Edit Connection</h2>
-              
+              <Controls />
+              <MiniMap />
+              <Background gap={12} size={1} />
+            </ReactFlow>
+          </Panel>
+
+          <PanelResizeHandle className="w-2 bg-gray-200 hover:bg-gray-300 transition-colors cursor-col-resize" />
+
+          <Panel defaultSize={25} minSize={20} maxSize={70} className="bg-white border-l border-gray-200 overflow-y-auto">
+            <div className="p-4">
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Condition</label>
-                <select
-                  value={selectedEdge.data?.condition || "default"}
-                  onChange={(e) => {
-                    const updatedEdges = edges.map(edge => 
-                      edge.id === selectedEdge.id 
-                        ? { 
-                            ...edge, 
-                            data: { ...edge.data, condition: e.target.value },
-                            style: {
-                              stroke: e.target.value === 'correct' 
-                                ? '#10B981' 
-                                : e.target.value === 'incorrect' 
-                                  ? '#EF4444' 
-                                  : '#6B7280'
-                            }
-                          }
-                        : edge
-                    );
-                    setEdges(updatedEdges);
-                  }}
-                  className="w-full p-2 border border-gray-300 rounded"
+                <button
+                  onClick={handleAddNode}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2"
                 >
-                  <option value="default">Default/Always</option>
-                  <option value="correct">Correct Solution</option>
-                  <option value="incorrect">Incorrect Solution</option>
-                </select>
+                  Add New Problem Node
+                </button>
               </div>
               
-              <button
-                onClick={() => handleDeleteEdge(selectedEdge.id)}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Delete Connection
-              </button>
+              {selectedNode ? (
+                <NodeEditPanel
+                  node={selectedNode}
+                  onUpdate={updateNodeData}
+                  onDelete={handleDeleteNode}
+                />
+              ) : selectedEdge ? (
+                <div className="bg-white rounded-lg shadow-md p-4">
+                  <h2 className="text-xl font-bold mb-4">Edit Connection</h2>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Condition</label>
+                    <select
+                      value={selectedEdge.data?.condition || "default"}
+                      onChange={(e) => {
+                        const updatedEdges = edges.map(edge => 
+                          edge.id === selectedEdge.id 
+                            ? { 
+                                ...edge, 
+                                data: { ...edge.data, condition: e.target.value },
+                                style: {
+                                  stroke: e.target.value === 'correct' 
+                                    ? '#10B981' 
+                                    : e.target.value === 'incorrect' 
+                                      ? '#EF4444' 
+                                      : '#6B7280'
+                                }
+                              }
+                            : edge
+                        );
+                        setEdges(updatedEdges);
+                      }}
+                      className="w-full p-2 border border-gray-300 rounded"
+                    >
+                      <option value="default">Default/Always</option>
+                      <option value="correct">Correct Solution</option>
+                      <option value="incorrect">Incorrect Solution</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleDeleteEdge(selectedEdge.id)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                  >
+                    Delete Connection
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  {nodes.length === 0 
+                    ? "Add your first node to start building" 
+                    : "Select a node or connection to edit"}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              {nodes.length === 0 
-                ? "Add your first node to start building" 
-                : "Select a node or connection to edit"}
-            </div>
-          )}
-        </div>
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );

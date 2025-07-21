@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { getPublicAdventures } from "../api/adventure";
 import { MainContent } from "../components/landing/MainContent"
 import { Sidebar } from "../components/landing/Sidebar";
@@ -21,8 +22,6 @@ interface Adventure {
   end_node_id: string;
   best_completion_time: number | null;
   best_completion_user: string | null;
-
-   
 }
 
 const Landing = () => {
@@ -32,9 +31,6 @@ const Landing = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
  
-  
-  
-
   useEffect(() => {
     const currentUser = localStorage.getItem("userName");
     setCurrentUsername(currentUser);
@@ -54,7 +50,6 @@ const Landing = () => {
         setLoading(false);
       }
     };
-
     fetchPublicAdventures();
   }, []);
 
@@ -62,10 +57,7 @@ const Landing = () => {
     localStorage.clear();
     navigate('/login');
   };
-
   
-
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -75,7 +67,6 @@ const Landing = () => {
   };
 
   const formatTime = (timeInSeconds: number | null): string => {
-
     if (!timeInSeconds) {
       return "no attempts"
     }
@@ -93,7 +84,6 @@ const Landing = () => {
     }
   };
   
-
   const calculateSuccessRate = (attempts: number, completions: number) => {
     if (attempts === 0) return 0;
     return Math.round((completions / attempts) * 100);
@@ -102,28 +92,42 @@ const Landing = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <Header currentUsername={currentUsername} handleLogout={handleLogout} />
-
       <ErrorMessage error={error} />
-
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-3/4 h-full overflow-y-auto">
-          <MainContent
-            loading={loading}
-            publicAdventures={publicAdventures}
-            calculateSuccessRate={calculateSuccessRate}
-            formatTime={formatTime}
-            formatDate={formatDate}
-          />
-        </div>
-
-        <Sidebar>
-        </Sidebar>
+        <PanelGroup direction="horizontal">
+          <Panel 
+            defaultSize={75} 
+            minSize={50} 
+            maxSize={85}
+            className="h-full"
+          >
+            <div className="h-full overflow-y-auto">
+              <MainContent
+                loading={loading}
+                publicAdventures={publicAdventures}
+                calculateSuccessRate={calculateSuccessRate}
+                formatTime={formatTime}
+                formatDate={formatDate}
+              />
+            </div>
+          </Panel>
+          
+          <PanelResizeHandle className="w-2 bg-gray-300 hover:bg-gray-400 cursor-col-resize flex items-center justify-center">
+            <div className="w-0.5 h-8 bg-gray-500 rounded-full" />
+          </PanelResizeHandle>
+          
+          <Panel 
+            defaultSize={25} 
+            minSize={15} 
+            maxSize={50}
+            className="h-full"
+          >
+            <Sidebar />
+          </Panel>
+        </PanelGroup>
       </div>
     </div>
   );
 };
-
-
   
-
 export default Landing;
