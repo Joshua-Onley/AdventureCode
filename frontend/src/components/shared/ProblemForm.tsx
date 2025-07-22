@@ -74,8 +74,6 @@ const ProblemForm: React.FC<ProblemFormProps> = ({
             <option value="rust">Rust</option>
             <option value="php">PHP</option>
             <option value="ruby">Ruby</option>
-            <option value="swift">Swift</option>
-            <option value="kotlin">Kotlin</option>
             <option value="bash">Bash</option>
           
 

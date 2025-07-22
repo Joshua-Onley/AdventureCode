@@ -17,10 +17,9 @@ class CodeExecutionService:
             "ruby": "3.0.1",
             "go": "1.16.2",
             "php": "8.2.3",
-            "swift": "5.8.1",
             "rust": "1.68.2",
             "bash": "5.2.0",
-            "kotlin": "1.8.20",
+            
         }
         
         self.extension_map = {
@@ -33,10 +32,8 @@ class CodeExecutionService:
             "ruby": "rb",
             "go": "go",
             "php": "php",
-            "swift": "swift",
             "rust": "rs",
             "bash": "sh",
-            "kotlin": "kt",
         }
     
     def get_version(self, language: str) -> str:

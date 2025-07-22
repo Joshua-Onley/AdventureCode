@@ -387,9 +387,10 @@ const AttemptAdventure: React.FC = () => {
                     placeholder="Write your code here..."
                     value={code}
                     onChange={(value) => setCode(value)}
-                    language="text"
-                    height="100px"
+                    language={node.data.language.toLowerCase()} 
+                    height="200px" 
                     theme="vs-light"
+                    
                   />
                 </div>
                 
