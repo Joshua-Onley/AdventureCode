@@ -73,7 +73,7 @@ const MyAdventures: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Adventures</h1>
-      <h4 className="p-6">TODO: Allow users to edit the title of each adventure on this page</h4>
+      
       
       {adventures.length === 0 ? (
         <div className="text-center py-12">
@@ -102,7 +102,7 @@ const MyAdventures: React.FC = () => {
 
                 {adventure.access_code && (
                   <p className="text-gray-600 mb-4 line-clamp-2">
-                    {adventure.access_code}
+                    Access Code: {adventure.access_code}
                   </p>
                 )}
                 
