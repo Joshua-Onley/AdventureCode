@@ -21,7 +21,7 @@ export const useAdventureGraph = () => {
         ...params,
         id: `edge-${params.source}-${params.target}`,
         type: "custom",
-        data: { condition: "default" },
+        data: { condition: "correct" }, 
         animated: false,
       };
       setEdges((eds) => addEdge(newEdge, eds));
@@ -32,14 +32,12 @@ export const useAdventureGraph = () => {
 
   const validateGraph = (nodes: Node[], edges: Edge[]) => {
 
-    // every problem node must have all fields completed. i.e., no missing information from any problem ndoe
-
+    // every problem node must have all fields completed 
     for (const node of nodes) {
       if (!node.data.title || !node.data.description || !node.data.language || !node.data.code_snippet || !node.data.expected_output ) {
         return `One or more problem nodes are missing information - all fields must be completed for each node`
       }
     }
-
 
     // an adventure has to have at least 2 problems otherwise the single problem creation page is more appropriate
     if (nodes.length < 2) {
@@ -59,6 +57,11 @@ export const useAdventureGraph = () => {
       }
       if (!nodeMap.has(edge.target)) {
         return `Edge references missing target node: ${edge.target}`;
+      }
+
+      const condition = edge.data?.condition;
+      if (condition !== "correct" && condition !== "incorrect") {
+        return `Invalid edge condition "${condition}". Only "correct" and "incorrect" edges are allowed.`;
       }
 
       // edge maps
@@ -117,66 +120,52 @@ export const useAdventureGraph = () => {
       return `These problems are unreachable: ${unreachable.map(n => n.data.title).join(", ")}`;
     }
     
-    // Any node that is not either a starting or ending node must have outgoing and incoming edges
+    // Any node that is not an ending node must have incoming edges (except start node)
     const middleNodes = nodes.filter(node => 
       node.id !== startNode.id && !endingNodes.some(end => end.id === node.id)
     );
     
-    const invalidNodes = middleNodes.filter(node => {
+    const nodesWithoutIncoming = middleNodes.filter(node => {
       const hasIncoming = edgesByTarget.has(node.id) && edgesByTarget.get(node.id)!.length > 0;
-      const hasOutgoing = edgesBySource.has(node.id) && edgesBySource.get(node.id)!.length > 0;
-      return !hasIncoming || !hasOutgoing;
+      return !hasIncoming;
     });
     
-    if (invalidNodes.length > 0) {
-      return `These problems must have both incoming and outgoing connections: ${invalidNodes.map(n => n.data.title).join(", ")}`;
+    if (nodesWithoutIncoming.length > 0) {
+      return `These problems must have incoming connections: ${nodesWithoutIncoming.map(n => n.data.title).join(", ")}`;
     }
     
-    // edge rules
+    // Edge condition validation
     const edgeConditionErrors: string[] = [];
   
-    nodes.forEach(node => {
-      if (endingNodes.some(end => end.id === node.id)) return;
-      
+    // Check start node and middle nodes for required correct edges
+    const nonEndingNodes = nodes.filter(node => 
+      !endingNodes.some(end => end.id === node.id)
+    );
+    
+    nonEndingNodes.forEach(node => {
       const outgoingEdges = edgesBySource.get(node.id) || [];
-      const conditions = new Set(outgoingEdges.map(e => e.data?.condition || "default"));
+      const correctEdges = outgoingEdges.filter(e => e.data?.condition === "correct");
+      const incorrectEdges = outgoingEdges.filter(e => e.data?.condition === "incorrect");
       
-      // all possible outcomes (correct/incorrect) must be covered to avoid dead ends
-      const hasCorrect = conditions.has("correct");
-      const hasIncorrect = conditions.has("incorrect");
-      const hasDefault = conditions.has("default") || conditions.has("always");
-      
-      // only need a default if not both correct and incorrect are present
-      if (!hasDefault && !(hasCorrect && hasIncorrect)) {
-        if (!hasCorrect && !hasIncorrect) {
-          edgeConditionErrors.push(
-            `"${node.data.title}" needs at least one path (add default/always or both correct/incorrect)`
-          );
-        } else if (hasCorrect && !hasIncorrect) {
-          edgeConditionErrors.push(
-            `"${node.data.title}" has a 'correct' path but no 'incorrect' path`
-          );
-        } else if (hasIncorrect && !hasCorrect) {
-          edgeConditionErrors.push(
-            `"${node.data.title}" has an 'incorrect' path but no 'correct' path`
-          );
-        }
+      // Every non-ending node (start + middle) must have at least one correct edge
+      if (correctEdges.length === 0) {
+        edgeConditionErrors.push(
+          `"${node.data.title}" must have at least one 'correct' outgoing edge`
+        );
       }
       
-      const conditionCounts = new Map<string, number>();
-      outgoingEdges.forEach(edge => {
-        const condition = edge.data?.condition || "default";
-        conditionCounts.set(condition, (conditionCounts.get(condition) || 0) + 1);
-      });
+      // No node should have multiple outgoing edges of the same type
+      if (correctEdges.length > 1) {
+        edgeConditionErrors.push(
+          `"${node.data.title}" has multiple 'correct' outgoing edges (only one allowed)`
+        );
+      }
       
-      conditionCounts.forEach((count, condition) => {
-        // Allow multiple default edges
-        if (count > 1 && condition !== "default") {
-          edgeConditionErrors.push(
-            `"${node.data.title}" has multiple ${condition} edges (only one allowed)`
-          );
-        }
-      });
+      if (incorrectEdges.length > 1) {
+        edgeConditionErrors.push(
+          `"${node.data.title}" has multiple 'incorrect' outgoing edges (only one allowed)`
+        );
+      }
     });
     
     if (edgeConditionErrors.length > 0) {
@@ -191,19 +180,19 @@ export const useAdventureGraph = () => {
       }`;
     }
     
-    // No duplicate edges
+    // No duplicate edges 
     const edgeKeys = new Set<string>();
     const duplicateEdges = edges.filter(edge => {
-      const key = `${edge.source}-${edge.target}`;
+      const key = `${edge.source}-${edge.target}-${edge.data?.condition}`;
       if (edgeKeys.has(key)) return true;
       edgeKeys.add(key);
       return false;
     });
     
     if (duplicateEdges.length > 0) {
-      return `Duplicate connections found between: ${
+      return `Duplicate connections found: ${
         duplicateEdges.map(e => 
-          `${nodeMap.get(e.source)?.data.title} → ${nodeMap.get(e.target)?.data.title}`
+          `${nodeMap.get(e.source)?.data.title} → ${nodeMap.get(e.target)?.data.title} (${e.data?.condition})`
         ).join(", ")
       }`;
     }

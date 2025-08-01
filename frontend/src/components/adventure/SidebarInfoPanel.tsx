@@ -13,10 +13,7 @@ const SidebarInfoPanel: React.FC = () => {
           <div className="w-4 h-1 bg-red-500 mr-2"></div>
           <span><strong>Red:</strong> Incorrect path</span>
         </div>
-        <div className="flex items-center">
-          <div className="w-4 h-1 bg-gray-400 mr-2"></div>
-          <span><strong>Grey:</strong> Default path</span>
-        </div>
+        
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: List[str] = [
         "https://victorious-bay-07769b703.1.azurestaticapps.net",
+        "https://adventurecode.tech",
         "https://adventurecode-bcekcrhpauffhzbn.uksouth-01.azurewebsites.net",
         "http://localhost:5173",
         "http://127.0.0.1:8000"

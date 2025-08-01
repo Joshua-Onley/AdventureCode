@@ -349,7 +349,7 @@ const EditAdventure: React.FC = () => {
                   <div className="mb-4">
                     <label className="block text-sm font-medium mb-1">Condition</label>
                     <select
-                      value={selectedEdge.data?.condition || "default"}
+                      value={selectedEdge.data?.condition || "correct"}
                       onChange={(e) => {
                         const updatedEdges = edges.map(edge => 
                           edge.id === selectedEdge.id 
@@ -370,7 +370,7 @@ const EditAdventure: React.FC = () => {
                       }}
                       className="w-full p-2 border border-gray-300 rounded"
                     >
-                      <option value="default">Default/Always</option>
+                      
                       <option value="correct">Correct Solution</option>
                       <option value="incorrect">Incorrect Solution</option>
                     </select>
