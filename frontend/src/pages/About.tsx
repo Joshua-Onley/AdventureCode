@@ -1,7 +1,28 @@
+import { useNavigate } from "react-router-dom";
+
 export default function About() {
+
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl border border-gray-200 space-y-8">
+    <div className="container min-h-screen min-w-screen">
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+      <h1 className="text-2xl font-bold">Instructions</h1>
+        <div className="flex space-x-2">
+            
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Home
+          </button>
+        </div>
+      </div>
+     
+      
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl mx-auto border border-gray-200 space-y-8">
+
+
         
         <section className="text-center space-y-4">
           <h1 className="text-4xl font-extrabold text-gray-900">AdventureCode: Turn coding into an interactive adventure!</h1>

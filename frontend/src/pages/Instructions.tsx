@@ -1,6 +1,22 @@
+import { useNavigate } from "react-router-dom";
+
+
 export default function Instructions() {
+  const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+      <h1 className="text-2xl font-bold">Instructions</h1>
+        <div className="flex space-x-2">
+            
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Home
+          </button>
+        </div>
+      </div>
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 space-y-8">
      
         <section>

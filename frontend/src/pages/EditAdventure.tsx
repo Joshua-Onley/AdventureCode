@@ -287,10 +287,10 @@ const EditAdventure: React.FC = () => {
             {saving ? "Saving..." : "Save Adventure"}
           </button>
           <button
-            onClick={() => navigate("/my-adventures")}
+            onClick={() => navigate("/")}
             className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
           >
-            Cancel
+            Home
           </button>
         </div>
       </div>
