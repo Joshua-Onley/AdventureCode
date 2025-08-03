@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import StatusMessages from "../components/adventure/StatusMessages";
+import { useMessages } from "../hooks/useMessages"
+import { isTokenExpired } from "../utils/authHelpers";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
@@ -28,6 +31,8 @@ const MyProblems: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { message } = useMessages()
+  const [tokenExpired, setTokenExpired] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchProblem = async () => {
@@ -36,6 +41,11 @@ const MyProblems: React.FC = () => {
         if (!token) {
           navigate("/login", { replace: true });
           return;
+        }
+
+        if (isTokenExpired(token)) {
+          setTokenExpired(true)
+          return
         }
 
         const response = await axios.get<Problem[]>(
@@ -102,8 +112,13 @@ const MyProblems: React.FC = () => {
         </div>
       </div>
 
+      <StatusMessages
+        showTokenExpired={tokenExpired}
+        message={message}
+      />
+
       
-      {problems.length === 0 ? (
+      {problems.length === 0 && tokenExpired === false ? (
         <div className="text-center py-12">
           <p className="text-lg mb-4">You haven't created any problems yet</p>
           <button

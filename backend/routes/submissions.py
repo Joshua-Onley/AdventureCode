@@ -160,3 +160,80 @@ async def submit_adventure_problem(
             status_code=500,
             content={"error": "Internal server error", "detail": str(e)}
         )
+
+
+@router.post("/adventure_submissions/guest_by_id")
+async def submit_guest_adventure_problem_by_id(
+    adventure_id: int = Form(...),
+    node_id: str = Form(...),
+    code: str = Form(...),
+    language: str = Form(...),
+    guest_mode: str = Form(...),
+    adventure_service: AdventureService = Depends(get_adventure_service),
+    code_execution_service: CodeExecutionService = Depends(get_code_execution_service)
+):
+    """
+    Guest submission endpoint that accepts adventure_id directly.
+    Validates code against expected output but does NOT save any data to the database.
+    """
+    
+    try:
+        logger.info(f"Guest submission received for adventure_id: {adventure_id}, node_id: {node_id}")
+        
+        if guest_mode != "true":
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Invalid guest submission"}
+            )
+ 
+        adventure = adventure_service.get_adventure_by_id(adventure_id)
+        node_entry = next(
+            (n for n in adventure.graph_data["nodes"] if n["id"] == node_id),
+            None
+        )
+        
+        if not node_entry:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Node not found in this adventure"}
+            )
+   
+        expected_output = node_entry["data"]["expected_output"].strip()
+        run_result = await code_execution_service.execute_code(code, language)
+        user_output = run_result.get("output", "").strip()
+        is_correct = (user_output == expected_output)
+        
+        if is_correct:
+            message = "Correct! Well done. (Guest mode - progress not saved)"
+        else:
+            message = f"Incorrect. Expected:\n{expected_output}\n\nYour output:\n{user_output}\n\n(Guest mode - progress not saved)"
+        
+        
+        return {
+            "message": message,
+            "output": user_output,
+            "stdout": run_result.get("stdout"),
+            "stderr": run_result.get("stderr"),
+            "is_correct": is_correct,
+            "guest_mode": True
+        }
+        
+    except NotFoundError as e:
+        logger.error(f"NotFoundError in guest submission: {e}")
+        return JSONResponse(
+            status_code=404,
+            content={"error": str(e)}
+        )
+    except ValidationError as e:
+        logger.error(f"ValidationError in guest submission: {e}")
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Validation failed", "detail": str(e)}
+        )
+    except Exception as e:
+        logger.error(f"Error in guest adventure submission by ID: {e}")
+        logger.error(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal server error", "detail": str(e)}
+        )

@@ -1,11 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { getPublicAdventures } from "../api/adventure";
+import { getPublicAdventures, fetchCompletedAdventures } from "../api/adventure";
 import { MainContent } from "../components/landing/MainContent"
 import { Sidebar } from "../components/landing/Sidebar";
 import { ErrorMessage } from "../components/landing/ErrorMessage";
 import { Header } from "../components/landing/Header"
+import StatusMessages from "../components/adventure/StatusMessages";
+import { useMessages } from "../hooks/useMessages"
+import { isTokenExpired } from "../utils/authHelpers";
+ 
 
 interface Adventure {
   id: number;
@@ -30,7 +34,22 @@ const Landing = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
- 
+  const [tokenExpired, setTokenExpired] = useState<boolean>(false);
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
+  const { message } = useMessages()
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return;
+    }
+    if (isTokenExpired(token)) {
+      setTokenExpired(true)
+      return
+    }
+    
+  }, []);
+  
   useEffect(() => {
     const currentUser = localStorage.getItem("userName");
     setCurrentUsername(currentUser);
@@ -53,10 +72,28 @@ const Landing = () => {
     fetchPublicAdventures();
   }, []);
 
+  useEffect(() => {
+    if (!currentUsername || currentUsername === "guest") return;
+    const userId = localStorage.getItem("userId")
+    const token = localStorage.getItem("token");
+    if(!userId) return;
+    if (!token) return;
+
+    (async () => {
+      try {
+        const completed = await fetchCompletedAdventures(userId, token);
+        setCompletedIds(new Set(completed.map(a => a.id)));
+      } catch (e) {
+        console.error("Failed to fetch completed adventures", e);
+      }
+    })();
+  }, [currentUsername]);
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
   };
+
   
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -91,7 +128,12 @@ const Landing = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <Header currentUsername={currentUsername} handleLogout={handleLogout} />
+      <Header currentUsername={currentUsername} handleLogout={handleLogout} tokenExpired={tokenExpired} />
+      <StatusMessages
+        showTokenExpired={tokenExpired}
+        message={message}
+      />
+      
       <ErrorMessage error={error} />
       <div className="flex flex-1 overflow-hidden">
         <PanelGroup direction="horizontal">
@@ -105,6 +147,7 @@ const Landing = () => {
               <MainContent
                 loading={loading}
                 publicAdventures={publicAdventures}
+                completedIds={completedIds} 
                 calculateSuccessRate={calculateSuccessRate}
                 formatTime={formatTime}
                 formatDate={formatDate}

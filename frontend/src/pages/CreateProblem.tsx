@@ -5,6 +5,9 @@ import { useCreateProblem } from "../hooks/useCreateProblem";
 import type { ProblemBase } from "../components/shared/types";
 import { isTokenExpired, getStoredToken } from "../utils/authHelpers";
 import useAutoSave from "../hooks/useAutosave";
+import StatusMessages from "../components/adventure/StatusMessages";
+import { useMessages } from "../hooks/useMessages"
+
 
 type ProblemDraft = {
   problem: ProblemBase;
@@ -17,6 +20,7 @@ const CreateProblem = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showTokenExpired, setShowTokenExpired] = useState(false);
   const [shouldBlockSave, setShouldBlockSave] = useState(false); 
+  const { message } = useMessages();
 
   const userId = localStorage.getItem('userId') || 'unknown';
   const STORAGE_KEY = `draft:CreateProblem:${userId}`;
@@ -156,13 +160,11 @@ const CreateProblem = () => {
           </button>
         </div>
       </div>
-      {showTokenExpired && (
-        <div className="token-expired-banner">
-          <p>Your session has expired. Please re-authenticate.</p>
-          <button onClick={() => navigate('/login')}>Login Now</button>
-          <p>Your progress will be saved automatically.</p>
-        </div>
-      )}
+      
+      <StatusMessages
+        showTokenExpired={showTokenExpired}
+        message={message}
+      />
       
        
       

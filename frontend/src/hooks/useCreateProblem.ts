@@ -30,8 +30,6 @@ export function useCreateProblem() {
       return;
     }
 
-    
-
     try {
       const resp = await createProblem(payload, token);
       console.log(resp.data.problem_id)

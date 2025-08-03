@@ -14,10 +14,7 @@ const EdgeLegend = () => {
                       <div className="w-4 h-1 bg-red-500 mr-2"></div>
                       <span><strong>Red:</strong> Incorrect path</span>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-1 bg-gray-400 mr-2"></div>
-                      <span><strong>Grey:</strong> Default path</span>
-                    </div>
+                    
                     <div className="flex items-center mt-2">
                       <div className="w-4 h-4 bg-blue-500 rounded mr-2"></div>
                       <span><strong>Blue Node:</strong> Current problem</span>

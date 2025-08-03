@@ -126,3 +126,41 @@ export interface ProblemBase {
     { value: "bash", label: "Bash" },
     { value: "kotlin", label: "Kotlin" },
   ];
+
+  export interface DetailedAdventure {
+    id: number;
+    name: string;
+    access_code: string;
+    description?: string;
+    graph_data: {
+      nodes: GraphNode[];
+      edges: GraphEdge[];
+    };
+    start_node_id: string;
+    end_node_id: string;
+    problems: ProblemData[];
+  }
+
+  export interface GuestAttempt {
+    id: string;
+    adventure_id: number;
+    current_node_id: string;
+    completed: boolean;
+    path_taken: Array<{
+      node_id: string;
+      code?: string;
+      outcome?: string;
+    }>;
+    created_at: string;
+    updated_at: string;
+    isGuest: true;
+  }
+
+  export interface AdventureSubmissionResponse  {
+    message: string
+    output: string
+    sdtout: string
+    stderr: string
+    is_correct: boolean
+    guest_mode: boolean
+  }

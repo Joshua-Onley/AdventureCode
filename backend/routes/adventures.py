@@ -5,8 +5,19 @@ from typing import Optional, List
 import logging
 
 from database import get_db
-from models.user import User
-from schemas.adventure import Adventure, AdventureCreate, AdventureUpdate, AdventureAttempt, AdventureProgress
+from models.user import User as UserModel
+
+from models.adventure import (
+    Adventure as AdventureModel,
+    AdventureAttempt as AdventureAttemptModel
+                )
+from schemas.adventure import (
+     Adventure as AdventureSchema,
+     AdventureCreate as AdventureCreateSchema,
+     AdventureUpdate as AdventureUpdateSchema,
+     AdventureAttempt as AdventureAttemptSchema, 
+     AdventureProgress as AdventureProgressSchema
+     )
 from services.adventure_service import AdventureService
 from services.code_execution_service import CodeExecutionService
 from dependencies import get_current_user
@@ -24,10 +35,10 @@ def get_code_execution_service() -> CodeExecutionService:
     return CodeExecutionService()
 
 
-@router.post("/", response_model=Adventure, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=AdventureSchema, status_code=status.HTTP_201_CREATED)
 async def create_adventure(
-    adventure: AdventureCreate,
-    current_user: User = Depends(get_current_user),
+    adventure: AdventureCreateSchema,
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
     
@@ -82,9 +93,9 @@ def get_adventure_by_code(
         )
 
 
-@router.get("/", response_model=List[Adventure])
+@router.get("/", response_model=List[AdventureSchema])
 async def list_user_adventures(
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
     
@@ -119,11 +130,11 @@ def view_adventure(
         )
 
 
-@router.put("/{adventure_id}", response_model=Adventure)
+@router.put("/{adventure_id}", response_model=AdventureSchema)
 async def update_adventure(
     adventure_id: int,
-    adventure_update: AdventureUpdate,
-    current_user: User = Depends(get_current_user),
+    adventure_update: AdventureUpdateSchema,
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
 
@@ -150,7 +161,7 @@ async def update_adventure(
 @router.delete("/{adventure_id}")
 async def delete_adventure(
     adventure_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
 
@@ -175,10 +186,10 @@ async def delete_adventure(
         )
 
 
-@router.get("/{adventure_id}/attempt", response_model=AdventureAttempt)
+@router.get("/{adventure_id}/attempt", response_model=AdventureAttemptSchema)
 async def get_or_start_adventure_attempt(
     adventure_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
     
@@ -197,10 +208,10 @@ async def get_or_start_adventure_attempt(
         )
 
 
-@router.get("/attempts", response_model=List[AdventureAttempt])
+@router.get("/attempts", response_model=List[AdventureAttemptSchema])
 async def get_user_attempts(
     adventure_id: Optional[int] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
     
@@ -214,11 +225,11 @@ async def get_user_attempts(
         )
 
 
-@router.patch("/attempts/{attempt_id}/progress", response_model=AdventureAttempt)
+@router.patch("/attempts/{attempt_id}/progress", response_model=AdventureAttemptSchema)
 async def update_attempt_progress(
     attempt_id: int,
-    progress: AdventureProgress,
-    current_user: User = Depends(get_current_user),
+    progress: AdventureProgressSchema,
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service)
 ):
    
@@ -243,7 +254,7 @@ async def submit_adventure_problem(
     node_id: str = Form(...),
     code: str = Form(...),
     language: str = Form(...),
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_user),
     adventure_service: AdventureService = Depends(get_adventure_service),
     code_execution_service: CodeExecutionService = Depends(get_code_execution_service)
 ):
@@ -315,3 +326,21 @@ async def submit_adventure_problem(
             status_code=500,
             content={"error": "Internal server error", "detail": str(e)}
         )
+    
+
+@router.get("/users/{user_id}/completed_public_adventures", response_model=List[AdventureSchema])
+def get_completed_public_adventures(user_id: int, db: Session = Depends(get_db)):
+    
+    completed_adventures = (
+        db.query(AdventureModel)
+        .join(AdventureAttemptModel, AdventureModel.id == AdventureAttemptModel.adventure_id)
+        .filter(
+            AdventureAttemptModel.user_id == user_id,
+            AdventureAttemptModel.completed == True,
+            AdventureModel.is_public == True
+        )
+        .distinct() 
+        .all()
+    )
+
+    return completed_adventures

@@ -83,6 +83,12 @@ export default function Login() {
     }
   };
 
+  const handleGuestLogin = () => {
+    localStorage.clear()
+    localStorage.setItem("userName", "guest")
+    navigate("/")
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200">
@@ -124,7 +130,7 @@ export default function Login() {
         </form>
         <div className="mt-4 pt-4 border-t border-gray-200">
           <button
-            onClick={() => navigate("/")}
+            onClick={handleGuestLogin}
             className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition-colors"
           >
             Continue as Guest

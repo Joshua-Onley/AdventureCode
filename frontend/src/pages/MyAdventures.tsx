@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import type { Adventure } from "../components/shared/types";
+import StatusMessages from "../components/adventure/StatusMessages";
+import { useMessages } from "../hooks/useMessages"
+import { isTokenExpired } from "../utils/authHelpers";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
@@ -10,6 +13,8 @@ const MyAdventures: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [tokenExpired, setTokenExpired] = useState<boolean>(false)
+  const { message } = useMessages();
 
   useEffect(() => {
     const fetchAdventures = async () => {
@@ -18,6 +23,10 @@ const MyAdventures: React.FC = () => {
         if (!token) {
           navigate("/login", { replace: true });
           return;
+        }
+        if (isTokenExpired(token)) {
+          setTokenExpired(true)
+          return
         }
 
         const response = await axios.get<Adventure[]>(
@@ -87,8 +96,13 @@ const MyAdventures: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <StatusMessages
+        showTokenExpired={tokenExpired}
+        message={message}
+      />
       
-      {adventures.length === 0 ? (
+      {adventures.length === 0 && !tokenExpired ? (
         <div className="text-center py-12">
           <p className="text-lg mb-4">You haven't created any adventures yet</p>
           <button

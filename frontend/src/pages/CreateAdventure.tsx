@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import type { Node } from "reactflow";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
-import AdventureHeader from "../components/adventure/AdventureHeader";
+import AdventureHeader from "../components/adventure/CreateAdventureHeader";
 import StatusMessages from "../components/adventure/StatusMessages";
 import AdventureFormInputs from "../components/adventure/AdventureFormInputs";
 import FlowCanvas from "../components/adventure/FlowCanvas";

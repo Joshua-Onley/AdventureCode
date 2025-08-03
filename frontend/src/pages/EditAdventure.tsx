@@ -17,6 +17,9 @@ import NodeEditPanel from "../components/adventure/NodeEditPanel";
 import { useAdventureGraph } from "../hooks/useAdventureGraph";
 import type { ProblemData, GraphEdge, GraphNode, NodeData, EdgeData } from "../components/shared/types";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { isTokenExpired } from "../utils/authHelpers";
+import StatusMessages from "../components/adventure/StatusMessages";
+import { useMessages } from "../hooks/useMessages"
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
@@ -57,6 +60,8 @@ const EditAdventure: React.FC = () => {
   const [adventure, setAdventure] = useState<Adventure | null>(null);
   const [saving, setSaving] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showTokenExpired, setShowTokenExpired] = useState(false);
+  const { message } = useMessages();
   
   const {
     nodes,
@@ -81,6 +86,10 @@ const EditAdventure: React.FC = () => {
           navigate("/login");
           return;
         }
+
+         if (isTokenExpired(token)) {
+              setShowTokenExpired(true);
+            }
 
         const response = await axios.get(
           `${FASTAPI_BACKEND_URL}/api/adventures/${id}`,
@@ -150,12 +159,21 @@ const EditAdventure: React.FC = () => {
 
   const handleSaveAdventure = async () => {
 
+    const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+         if (isTokenExpired(token)) {
+              setShowTokenExpired(true);
+              return
+            }
+
     const validationError = validateGraph(nodes, edges);
     if (validationError) {
       setValidationError(validationError);
       return;
     }
-    
     setValidationError(null);
     setSaving(true);
     
@@ -294,6 +312,10 @@ const EditAdventure: React.FC = () => {
           </button>
         </div>
       </div>
+      <StatusMessages
+        showTokenExpired={showTokenExpired}
+        message={message}
+      />
 
       {validationError && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

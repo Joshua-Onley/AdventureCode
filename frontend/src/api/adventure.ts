@@ -3,12 +3,15 @@ import type {
   Adventure,
   PublicAdventuresResponse,
   AdventureCreate,  
+  AdventureAttempt,
+  DetailedAdventure,
+  AdventureSubmissionResponse,
 } from "../components/shared/types";
 import { isValidationErrorResponse } from "../hooks/useCreateProblem";
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
 
-   export const createAdventure = async (
+export const createAdventure = async (
     adventureData: AdventureCreate    
   ) => {
     const token = localStorage.getItem("token");
@@ -43,79 +46,156 @@ const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
     }
   };
 
-export const startAdventureAttempt = async (adventureId: number) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Authentication required");
-
-  const response = await axios.post(
-    `${FASTAPI_BACKEND_URL}/api/adventure-attempts`,
-    { adventure_id: adventureId },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-  return response.data;
-};
-
-export const updateAdventureAttempt = async (
-  attemptId: number,
-  current_node_id: string,
-  completed: boolean = false
-) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Authentication required");
-
-  const response = await axios.put(
-    `${FASTAPI_BACKEND_URL}/api/adventure-attempts/${attemptId}`,
-    { current_node_id, completed },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-  return response.data;
-};
-
-export const getAdventure = async (id: number) => {
-  const response = await axios.get(`${FASTAPI_BACKEND_URL}/api/adventures/${id}`);
-  return response.data;
-};
-
 export const getPublicAdventures = async (): Promise<Adventure[]> => {
   const response = await axios.get<PublicAdventuresResponse>(`${FASTAPI_BACKEND_URL}/api/adventures/public`);
-  console.log("fetching public adventures from adventure.ts file", response);
+  
   return response.data.adventures;
 };
 
-export const getUserAdventures = async (userId: number) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Authentication required");
-  
-  const response = await axios.get(
-    `${FASTAPI_BACKEND_URL}/api/adventures/user/${userId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-  return response.data;
-};
+export const getAdventureAttempt = async (adventureId: number, token?: string): Promise<AdventureAttempt> => {
+  try {
+    
+    const headers = token
+      ? { Authorization: `Bearer ${token}` }
+      : undefined;
 
-export const getAdventureAttempt = async (attemptId: number) => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Authentication required");
-  
-  const response = await axios.get(
-    `${FASTAPI_BACKEND_URL}/api/adventure-attempts/${attemptId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await axios.get<AdventureAttempt>(
+      `${FASTAPI_BACKEND_URL}/api/adventures/${adventureId}/attempt`,
+      { headers }
+    );
+    
+    return res.data;
+  } catch (err) {
+    const error = err as AxiosError;
+      const status = error.response?.status;
+      const data = error.response?.data;
+      if (status === 401) {
+        throw new Error("Unauthorized: Please log in again.");
+      } else if (status === 422 && isValidationErrorResponse(data)) {
+        const messages = data.detail.map((d) => d.msg).join(", ");
+        throw new Error(`Validation error: ${messages}`);
+      } else if (typeof data === "string") {
+        throw new Error(data);
+      } else {
+        throw new Error("Something went wrong. Tr again later.");
+      }
+  }
+}
+
+export const getAdventureByAccessCode = async (accessCode: string, headers: Record<string, string>): Promise<DetailedAdventure> => {
+  try {
+      
+      const res = await axios.get<DetailedAdventure>(
+          `${FASTAPI_BACKEND_URL}/api/adventures/access/${accessCode}`,
+          { headers }
+      );
+      
+      return res.data
+    } catch(err) {
+      const error = err as AxiosError;
+      const status = error.response?.status;
+      const data = error.response?.data;
+      if (status === 401) {
+        throw new Error("Unauthorized: Please log in again.");
+      } else if (status === 422 && isValidationErrorResponse(data)) {
+        const messages = data.detail.map((d) => d.msg).join(", ");
+        throw new Error(`Validation error: ${messages}`);
+      } else if (typeof data === "string") {
+        throw new Error(data);
+      } else {
+        throw new Error("Something went wrong. Try again later.");
+      }
     }
-  );
-  return response.data;
-};
+  }
+
+  export const submitGuestCode = async (form: URLSearchParams): Promise<AdventureSubmissionResponse> => {
+    try {
+    const { data } = await axios.post(
+      `${FASTAPI_BACKEND_URL}/api/adventure_submissions/guest_by_id`,
+      form,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+    
+    return data
+  } catch (err) {
+    const error = err as AxiosError;
+      const status = error.response?.status;
+      const data = error.response?.data;
+      if (status === 401) {
+        throw new Error("Unauthorized: Please log in again.");
+      } else if (status === 422 && isValidationErrorResponse(data)) {
+        const messages = data.detail.map((d) => d.msg).join(", ");
+        throw new Error(`Validation error: ${messages}`);
+      } else if (typeof data === "string") {
+        throw new Error(data);
+      } else {
+        throw new Error("Something went wrong. Try again later.");
+      }
+  }
+}
+
+export const submitUserCode = async (form: URLSearchParams, token?:string): Promise<AdventureSubmissionResponse> => {
+
+  try {
+    const {data} = await axios.post(
+      `${FASTAPI_BACKEND_URL}/api/adventure_submissions`,
+      form,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return data
+  } catch(err) {
+    const error = err as AxiosError;
+      const status = error.response?.status;
+      const data = error.response?.data;
+      if (status === 401) {
+        throw new Error("Unauthorized: Please log in again.");
+      } else if (status === 422 && isValidationErrorResponse(data)) {
+        const messages = data.detail.map((d) => d.msg).join(", ");
+        throw new Error(`Validation error: ${messages}`);
+      } else if (typeof data === "string") {
+        throw new Error(data);
+      } else {
+        throw new Error("Something went wrong. Try again later.");
+      }
+  }}
+
+
+  export const updateProgress = async (authenticatedAttemptId: number, nextNodeId: string, outcome: string, code: string, completed: boolean, token?:string):Promise<AdventureAttempt> => {
+    
+    const { data } = await axios.patch<AdventureAttempt>(
+      `${FASTAPI_BACKEND_URL}/api/adventures/attempts/${authenticatedAttemptId}/progress`,
+      {
+        current_node_id: nextNodeId,
+        outcome: outcome,
+        code: code,
+        completed: completed  
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    return data
+
+  }
+
+  export const fetchCompletedAdventures = async (userId: string, token?: string): Promise<Adventure[]> => {
+    const {data} = await axios.get(
+        `${FASTAPI_BACKEND_URL}/api/adventures/users/${userId}/completed_public_adventures`,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return data
+
+}

@@ -44,8 +44,6 @@ export const useAdventureGraph = () => {
       return "Adventure must have at least 2 problems. Use the single problem creation for individual problems.";
     }
 
-    console.log(nodes)
-
     const edgesByTarget = new Map<string, Edge[]>();
     const edgesBySource = new Map<string, Edge[]>();
     const nodeMap = new Map<string, Node>(nodes.map(node => [node.id, node]));

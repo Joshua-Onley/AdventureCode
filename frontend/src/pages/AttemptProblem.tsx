@@ -54,8 +54,20 @@ export default function AttemptProblem() {
   const onCancel = () => navigate("/");
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Attempt a Problem</h2>
+    <div className="container min-w-screen">
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+      <h1 className="text-2xl font-bold">Attempt Problem</h1>
+        <div className="flex space-x-2">
+            
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Home
+          </button>
+        </div>
+      </div>
+      <div className="p-6">
 
       {!problemLoaded ? (
         loadingProblem ? (
@@ -99,6 +111,8 @@ export default function AttemptProblem() {
           </div>
         </>
       ) : null}
+
+      </div>
 
       {submitError && <p className="mt-4 text-red-600">{submitError}</p>}
       {submitMessage && (

@@ -1,4 +1,3 @@
-
 import { AdventureCard } from './AdventureCard';
 import { EmptyState } from './EmptyState';
 
@@ -7,16 +6,16 @@ import type { Adventure } from '../shared/types';
 interface MainContentProps {
     loading: boolean;
     publicAdventures: Adventure[];
+    completedIds: Set<number>;
     calculateSuccessRate: (attempts: number, completions: number) => number;
     formatTime: (time: number) => string;
     formatDate: (date: string) => string;
-
-
 }
 
 export const MainContent = ({ 
   loading, 
   publicAdventures, 
+  completedIds,
   calculateSuccessRate, 
   formatTime, 
   formatDate 
@@ -53,9 +52,10 @@ export const MainContent = ({
           {publicAdventures.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {publicAdventures.map((adventure) => (
-                <AdventureCard 
+                <AdventureCard
                   key={adventure.id}
                   adventure={adventure}
+                  isCompleted={completedIds.has(adventure.id)}
                   calculateSuccessRate={calculateSuccessRate}
                   formatTime={formatTime}
                   formatDate={formatDate}
