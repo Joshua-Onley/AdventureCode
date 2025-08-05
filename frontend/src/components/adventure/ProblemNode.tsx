@@ -2,7 +2,7 @@ import { Handle, Position } from "reactflow";
 import type { Problem } from "../shared/types";
 
 interface ProblemNodeProps {
-  data: Problem & { isCurrent?: boolean };
+  data: Problem & { isCurrent?: boolean, label: string };
   className?: string;
 }
 
@@ -77,7 +77,7 @@ const ProblemNode = ({ data, className = "" }: ProblemNodeProps) => {
         isConnectable={true}
       />
       <div className="problem-title" style={titleStyle}>
-        {data.title}
+        {data.label}
       </div>
       <div className="problem-meta" style={metaStyle}>
         {data.language} 

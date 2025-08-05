@@ -54,7 +54,7 @@ const MyProblems: React.FC = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log(response.data)
+       
         setProblems(response.data);
       } catch (err) {
         setError("Failed to fetch problems");

@@ -7,7 +7,6 @@ import { getAdventureAttempt, getAdventureByAccessCode, submitGuestCode, submitU
 import type { AxiosError } from "axios";
 
 interface UseAttemptAdventureReturn {
-
   adventure: DetailedAdventure | null;
   attempt: AdventureAttempt | GuestAttempt | null;
   nodes: Node<ProblemData>[];
@@ -42,7 +41,6 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
   
   const previousNodeId = useRef<string | null>(null);
 
-
   const isGuestAttempt = useCallback((attempt: AdventureAttempt | GuestAttempt): attempt is GuestAttempt => {
     return 'isGuest' in attempt && attempt.isGuest === true;
   }, []);
@@ -52,7 +50,6 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
     return nodes.find((n) => n.id === attempt.current_node_id) || null;
   }, [nodes, attempt]);
 
-  
   useEffect(() => {
     if (!accessCode) return;
     
@@ -126,6 +123,7 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
       });
   }, [accessCode, navigate]);
 
+
   useEffect(() => {
     if (!adventure?.id) return;
     
@@ -165,29 +163,37 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
       });
   }, [adventure?.id, navigate, adventure?.start_node_id]);
 
-
   useEffect(() => {
     if (!attempt || !nodes.length) return;
     
     const currentNodeId = attempt.current_node_id;
     
     if (currentNodeId && (previousNodeId.current !== currentNodeId || previousNodeId.current === null)) {
+      console.log('Loading code for node:', currentNodeId);
+      
       const nodeEntries = attempt.path_taken
         ?.filter(entry => entry.node_id === currentNodeId && entry.code) || [];
 
       if (nodeEntries.length > 0) {
-        setCode(nodeEntries[nodeEntries.length - 1].code || "");
+  
+        const codeToLoad = nodeEntries[nodeEntries.length - 1].code || "";
+        console.log('Loading previous submission:', codeToLoad);
+        setCode(codeToLoad);
       } else {
+       
         const currentNode = nodes.find(n => n.id === currentNodeId);
         if (currentNode && currentNode.data.code_snippet) {
+          console.log('Loading fresh code snippet:', currentNode.data.code_snippet);
           setCode(currentNode.data.code_snippet);
+        } else {
+          console.log('No code snippet found, clearing code');
+          setCode("");
         }
       }
       
       previousNodeId.current = currentNodeId;
     }
   }, [attempt, nodes]);
-
 
   const handleSubmit = useCallback(async (code: string, language: string) => {
     const token = localStorage.getItem("token");
@@ -264,11 +270,6 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
             updated_at: new Date().toISOString()
           };
           setAttempt(updatedAttempt);
-          
-          const nextNode = nodes.find(n => n.id === nextNodeId);
-          if (nextNode && nextNode.data.code_snippet) {
-            setCode(nextNode.data.code_snippet);
-          }
         }
         
       } catch (err) {
@@ -339,20 +340,13 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
         );
         
         setAttempt(updatedProgress);
-      
-        if (isCorrect && nextNodeId !== node.id && !adventureCompleted) {
-          const nextNode = nodes.find(n => n.id === nextNodeId);
-          if (nextNode && nextNode.data.code_snippet) {
-            setCode(nextNode.data.code_snippet);
-          }
-        }
       }
   
     } catch (err) {
       console.error("Submission failed:", err);
       setOutput("Failed to submit solution. Please try again.");
     }
-  }, [attempt, currentNode, adventure?.end_node_id, edges, nodes, isGuestAttempt]);
+  }, [attempt, currentNode, adventure?.end_node_id, edges, isGuestAttempt]);
 
   return {
     adventure,

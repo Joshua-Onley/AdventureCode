@@ -48,6 +48,7 @@ const AttemptAdventure: React.FC = () => {
     isGuestAttempt,
   } = useAttemptAdventure(accessCode);
 
+  
 
   if (error) {
     return (
@@ -109,8 +110,16 @@ const AttemptAdventure: React.FC = () => {
     );
   }
 
-  const currentId = attempt?.current_node_id;
   const isGuest = isGuestAttempt(attempt);
+
+ 
+  const visitedNodeIds = new Set<string>([
+    adventure.start_node_id, 
+    ...attempt.path_taken.map(entry => String(entry.node_id))
+    
+  ]);
+  console.log('attempt:  ', attempt)
+  console.log('visited nodes: ', visitedNodeIds)
 
   return (
     <div className="flex flex-col h-screen">
@@ -144,13 +153,18 @@ const AttemptAdventure: React.FC = () => {
           <Panel defaultSize={67} minSize={30} maxSize={80}>
             <div className="h-full">
               <ReactFlow
-                nodes={nodes.map((n) => ({
-                  ...n,
-                  data: {
-                    ...n.data,
-                    isCurrent: n.id === currentId,
-                  },
-                }))}
+                nodes={nodes.map((n) => {
+                 
+                  const isVisited = visitedNodeIds.has(n.id) || n.id === attempt.current_node_id;
+                  return {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      label: isVisited ? n.data.title : "???",
+                      isCurrent: n.id === attempt.current_node_id,
+                    },
+                  };
+                })}
                 edges={edges}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}

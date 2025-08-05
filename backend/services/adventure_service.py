@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from models.adventure import Adventure, AdventureAttempt
@@ -296,7 +297,7 @@ class AdventureService:
         return query.all()
 
     def update_attempt_progress(self, attempt_id: int, progress: AdventureProgress, user: User) -> AdventureAttempt:
-    
+
         attempt = (
             self.db.query(AdventureAttempt)
             .filter(
@@ -305,21 +306,21 @@ class AdventureService:
             )
             .first()
         )
-        
+       
         if not attempt:
             raise NotFoundError("Adventure attempt")
-        
-       
+    
         new_entry = {
-            "node_id": str(progress.current_node_id),
+            "node_id": str(attempt.current_node_id),  
             "outcome": progress.outcome.value,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "code": progress.code,
         }
         attempt.path_taken = attempt.path_taken or []
         attempt.path_taken.append(new_entry)
-        attempt.current_node_id = str(progress.current_node_id)
+        flag_modified(attempt, "path_taken")
         
+        attempt.current_node_id = str(progress.current_node_id)
         
         if getattr(progress, "completed", False):
             attempt.completed = True
@@ -328,7 +329,6 @@ class AdventureService:
             if attempt.start_time:
                 attempt.duration = attempt.end_time - attempt.start_time
             
-      
             adventure = self.db.query(Adventure).filter(Adventure.id == attempt.adventure_id).first()
             if adventure:
                 
@@ -345,12 +345,10 @@ class AdventureService:
                 
                 if not prior:
                     adventure.total_completions = (adventure.total_completions or 0) + 1
-                
-                
+            
                 if attempt.duration:
                     if not adventure.best_completion_time or attempt.duration < adventure.best_completion_time:
                         adventure.best_completion_time = attempt.duration
-                    
                     
                     all_completed = (
                         self.db.query(AdventureAttempt)
@@ -365,7 +363,6 @@ class AdventureService:
                         total_seconds = sum(a.duration.total_seconds() for a in all_completed if a.duration)
                         adventure.avg_completion_time = timedelta(seconds=total_seconds / len(all_completed))
             
-          
             leaderboard_entry = Leaderboard(
                 adventure_id=attempt.adventure_id,
                 user_id=user.id,
@@ -377,6 +374,8 @@ class AdventureService:
         
         self.db.commit()
         self.db.refresh(attempt)
+
+    
         return attempt
 
     def submit_adventure_problem(

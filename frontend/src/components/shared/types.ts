@@ -34,6 +34,7 @@ export interface ProblemBase {
     code_snippet: string;
     expected_output: string;
     difficulty: number;
+    label: string
   }
   
   export interface NodeData {
