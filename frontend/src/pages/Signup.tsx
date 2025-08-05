@@ -1,5 +1,5 @@
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 
@@ -95,6 +95,13 @@ export default function Signup() {
           >
             Continue as Guest
           </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          <span className="text-gray-600">Already have an account? </span>
+          <Link to="/login" className="text-blue-600 hover:underline font-medium">
+            Log In
+          </Link>
         </div>
       </div>
     </div>

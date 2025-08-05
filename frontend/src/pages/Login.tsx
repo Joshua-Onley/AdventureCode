@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import type { ValidationErrorResponse } from "../components/shared/types";
+import { Link } from "react-router-dom";
+
 
 interface LoginSuccessResponse {
   access_token: string;
@@ -135,6 +137,13 @@ export default function Login() {
           >
             Continue as Guest
           </button>
+        </div>
+
+        <div className="mt-4 text-center">
+          <span className="text-gray-600">Don't have an account? </span>
+          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+            Sign Up
+          </Link>
         </div>
       </div>
     </div>
