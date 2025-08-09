@@ -1,9 +1,3 @@
-"""
-
-I used generative AI (ChatGPT) to help with this file because i have no prior experience in writing tests for FastAPI apps.
-
-"""
-
 import pytest
 from sqlalchemy import JSON, Interval, String, types
 import sqlalchemy.dialects.postgresql as psql

@@ -54,7 +54,6 @@ async def submit_solution(
         
         if is_correct:
             message = "Correct! Well done."
-            print(f"submisssions.py problem {problem}")
             problem_service.increment_completions(problem)
         else:
             message = f"Incorrect. Expected output:\n{expected_output}\n\nYour output:\n{user_output}"

@@ -109,6 +109,23 @@ async def list_user_adventures(
         )
 
 
+@router.get("/attempts", response_model=List[AdventureAttemptSchema])
+async def get_user_attempts(
+    adventure_id: Optional[int] = None,
+    current_user: UserModel = Depends(get_current_user),
+    adventure_service: AdventureService = Depends(get_adventure_service)
+):
+    
+    try:
+        return adventure_service.get_user_attempts(current_user, adventure_id)
+    except Exception as e:
+        logger.error(f"Error getting user attempts: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Internal server error", "detail": str(e)}
+        )
+
+
 @router.get("/{adventure_id}")
 def view_adventure(
     adventure_id: int,
@@ -186,6 +203,7 @@ async def delete_adventure(
         )
 
 
+
 @router.get("/{adventure_id}/attempt", response_model=AdventureAttemptSchema)
 async def get_or_start_adventure_attempt(
     adventure_id: int,
@@ -207,22 +225,6 @@ async def get_or_start_adventure_attempt(
             content={"error": "Internal server error", "detail": str(e)}
         )
 
-
-@router.get("/attempts", response_model=List[AdventureAttemptSchema])
-async def get_user_attempts(
-    adventure_id: Optional[int] = None,
-    current_user: UserModel = Depends(get_current_user),
-    adventure_service: AdventureService = Depends(get_adventure_service)
-):
-    
-    try:
-        return adventure_service.get_user_attempts(current_user, adventure_id)
-    except Exception as e:
-        logger.error(f"Error getting user attempts: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Internal server error", "detail": str(e)}
-        )
 
 
 @router.patch("/attempts/{attempt_id}/progress", response_model=AdventureAttemptSchema)

@@ -12,8 +12,8 @@ class AuthenticationError(AppException):
         super().__init__(status_code=403, message=message)
 
 class AuthorisationError(AppException):
-    def __init__(self, message: str = "insufficient permissins"):
-        super().__init__(status_code=403)
+    def __init__(self, message: str = "insufficient permissions"):
+        super().__init__(message=message, status_code=403)
     
 class NotFoundError(AppException):
     def __init__(self, resource: str = "Resource"):
@@ -22,5 +22,7 @@ class NotFoundError(AppException):
 class ValidationError(AppException):
     def __init__(self, message: str, detail: str = None):
         super().__init__(status_code=400, message=message, detail=detail)
+
+
 
 
