@@ -59,7 +59,7 @@ export const useAdventureGraph = () => {
 
       const condition = edge.data?.condition;
       if (condition !== "correct" && condition !== "incorrect") {
-        return `Invalid edge condition "${condition}". Only "correct" and "incorrect" edges are allowed.`;
+        return `Invalid edge condition "${condition}". Only "correct" and "incorrect" edges are allowed. See the instructions page for examples of valid/invalid graphs`;
       }
 
       // edge maps
@@ -76,12 +76,12 @@ export const useAdventureGraph = () => {
     );
     
     if (startingNodes.length === 0) {
-      return "Adventure must have a starting problem (with no incoming connections)";
+      return "Adventure must have a starting problem (with no incoming connections). See the instructions page for examples of valid/invalid graphs";
     }
     
     if (startingNodes.length > 1) {
       return "Adventure can only have one starting problem. Currently has: " + 
-             startingNodes.map(n => n.data.title).join(", ");
+             startingNodes.map(n => n.data.title).join(", ") + " (Starting nodes are nodes with no incoming edges)";
     }
     
     const endingNodes = nodes.filter(node => 
@@ -93,7 +93,7 @@ export const useAdventureGraph = () => {
       }
       
       if (endingNodes.length > 1) {
-        return `Adventure can only have one ending problem. Currently has ${endingNodes.length}: ` + endingNodes.map(n => n.data.title).join(", ");
+        return `Adventure can only have one ending problem. Currently has ${endingNodes.length}: ` + endingNodes.map(n => n.data.title).join(", ") + " (ending nodes are nodes with no outgoing edges)";
       }
     
     // Each problem node must be reachable

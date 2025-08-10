@@ -82,31 +82,34 @@ export const getAdventureAttempt = async (adventureId: number, token?: string): 
   }
 }
 
-export const getAdventureByAccessCode = async (accessCode: string, headers: Record<string, string>): Promise<DetailedAdventure> => {
+export const getAdventureByAccessCode = async (
+  accessCode: string, 
+  headers: Record<string, string>
+): Promise<DetailedAdventure> => {
   try {
-      
-      const res = await axios.get<DetailedAdventure>(
-          `${FASTAPI_BACKEND_URL}/api/adventures/access/${accessCode}`,
-          { headers }
-      );
-      
-      return res.data
-    } catch(err) {
-      const error = err as AxiosError;
-      const status = error.response?.status;
-      const data = error.response?.data;
-      if (status === 401) {
-        throw new Error("Unauthorized: Please log in again.");
-      } else if (status === 422 && isValidationErrorResponse(data)) {
-        const messages = data.detail.map((d) => d.msg).join(", ");
-        throw new Error(`Validation error: ${messages}`);
-      } else if (typeof data === "string") {
-        throw new Error(data);
-      } else {
-        throw new Error("Something went wrong. Try again later.");
-      }
+    const res = await axios.get<DetailedAdventure>(
+      `${FASTAPI_BACKEND_URL}/api/adventures/access/${accessCode}`,
+      { headers }
+    );
+    return res.data;
+  } catch (err) {
+    const error = err as AxiosError;
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    if (status === 401) {
+      throw new Error("Unauthorized: Please log in again.");
+    } else if (status === 422 && isValidationErrorResponse(data)) {
+      const messages = data.detail.map((d) => d.msg).join(", ");
+      throw new Error(`Validation error: ${messages}`);
+    } 
+    if (status === 404) {
+      throw error; 
     }
+
+    throw new Error("Something went wrong. Try again later.");
   }
+}
 
   export const submitGuestCode = async (form: URLSearchParams): Promise<AdventureSubmissionResponse> => {
     try {

@@ -536,8 +536,6 @@ class TestAdventureAttempts:
         mock_service.get_user_attempts.return_value = mock_attempts
         
         response = adventure_client.get("/adventures/attempts")
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.json()}") 
         
         assert response.status_code == 200
         data = response.json()

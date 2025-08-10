@@ -22,6 +22,10 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.password.length < 7) {
+      setMessage("Password must be at least 7 characters long.");
+      return;
+    }
     try {
       const res = await axios.post(
         `${FASTAPI_BACKEND_URL}/api/signup`,

@@ -109,10 +109,9 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
         );
       })
       .catch((err) => {
-        console.error("Failed to fetch adventure:", err);
         setAdventure(null);
         setLoading(false);
-        
+      
         if (err.response?.status === 404) {
           setError("Adventure not found. Please check the access code and try again.");
         } else if (err.response?.status === 401 || err.response?.status === 403) {
@@ -121,6 +120,7 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
           setError("Failed to load adventure. Please try again later.");
         }
       });
+      
   }, [accessCode, navigate]);
 
 
@@ -169,7 +169,6 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
     const currentNodeId = attempt.current_node_id;
     
     if (currentNodeId && (previousNodeId.current !== currentNodeId || previousNodeId.current === null)) {
-      console.log('Loading code for node:', currentNodeId);
       
       const nodeEntries = attempt.path_taken
         ?.filter(entry => entry.node_id === currentNodeId && entry.code) || [];
@@ -177,16 +176,15 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
       if (nodeEntries.length > 0) {
   
         const codeToLoad = nodeEntries[nodeEntries.length - 1].code || "";
-        console.log('Loading previous submission:', codeToLoad);
         setCode(codeToLoad);
       } else {
        
         const currentNode = nodes.find(n => n.id === currentNodeId);
         if (currentNode && currentNode.data.code_snippet) {
-          console.log('Loading fresh code snippet:', currentNode.data.code_snippet);
+          
           setCode(currentNode.data.code_snippet);
         } else {
-          console.log('No code snippet found, clearing code');
+          
           setCode("");
         }
       }
