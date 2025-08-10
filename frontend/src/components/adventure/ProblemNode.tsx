@@ -2,7 +2,7 @@ import { Handle, Position } from "reactflow";
 import type { Problem } from "../shared/types";
 
 interface ProblemNodeProps {
-  data: Problem & { isCurrent?: boolean, label: string };
+  data: Problem & { isCurrent?: boolean, label?: string };
   className?: string;
 }
 
@@ -13,8 +13,8 @@ const ProblemNode = ({ data, className = "" }: ProblemNodeProps) => {
     padding: "12px",
     backgroundColor: data.isCurrent ? "#dbeafe" : "white",
     minWidth: "150px",
-    boxShadow: data.isCurrent 
-      ? "0 0 0 4px rgba(59, 130, 246, 0.3), 0 8px 16px rgba(0,0,0,0.15)" 
+    boxShadow: data.isCurrent
+      ? "0 0 0 4px rgba(59, 130, 246, 0.3), 0 8px 16px rgba(0,0,0,0.15)"
       : "0 2px 4px rgba(0,0,0,0.1)",
     fontFamily: "system-ui, -apple-system, sans-serif",
     position: "relative" as const,
@@ -66,6 +66,8 @@ const ProblemNode = ({ data, className = "" }: ProblemNodeProps) => {
     </div>
   ) : null;
 
+  const displayTitle = data.label || data.title || "Untitled Problem";
+
   return (
     <div className={`problem-node ${className}`} style={nodeStyle}>
       {currentNodeIndicator}
@@ -77,10 +79,10 @@ const ProblemNode = ({ data, className = "" }: ProblemNodeProps) => {
         isConnectable={true}
       />
       <div className="problem-title" style={titleStyle}>
-        {data.label}
+        {displayTitle}
       </div>
       <div className="problem-meta" style={metaStyle}>
-        {data.language} 
+        {data.language}
       </div>
       <Handle
         type="source"

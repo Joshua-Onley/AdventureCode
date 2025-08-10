@@ -3,7 +3,6 @@ import Landing from "./pages/Landing";
 import About from "./pages/About";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
-import Me from "./pages/Me";
 import CreateProblem from "./pages/CreateProblem";
 import AttemptProblem from "./pages/AttemptProblem";
 import CreateAdventure from "./pages/CreateAdventure";
@@ -23,7 +22,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/about" element={<About />} />
         <Route path="/instructions" element={<Instructions />} />
-        <Route path="/me" element={<Me />} />
+       
         <Route path="/problems/access/:code" element={<AttemptProblem />} />
         <Route path="/problems" element={<CreateProblem />} />
         <Route path="/my-problems" element={<MyProblems />}/>

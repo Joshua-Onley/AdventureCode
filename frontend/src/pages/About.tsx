@@ -7,7 +7,7 @@ export default function About() {
   return (
     <div className="container min-h-screen min-w-screen">
       <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
-      <h1 className="text-2xl font-bold">Instructions</h1>
+      <h1 className="text-2xl font-bold">About</h1>
         <div className="flex space-x-2">
             
           <button
@@ -27,22 +27,16 @@ export default function About() {
         <section className="text-center space-y-4">
           <h1 className="text-4xl font-extrabold text-gray-900">AdventureCode: Turn coding into an interactive adventure!</h1>
           <p className="text-xl text-gray-700">Empowering teachers to craft tailored coding challenges and learning pathways for students.</p>
-          <div className="mt-6">
-            <img
-              src="/images/graph.png"
-              alt="Screenshot of AdventureCode graph canvas"
-              className="mx-auto rounded-lg shadow-lg border border-gray-200"
-            />
-          </div>
+          
         </section>
 
         <section className="space-y-4">
           <h2 className="text-3xl font-bold text-gray-800 border-b pb-2 mb-4">Key Features</h2>
           <div className="space-y-2">
               <h3 className="text-xl font-semibold text-gray-800">Interactive Graph Designer</h3>
-              <p className="text-gray-700">Drag-and-drop nodes, define problem flows, and create branching paths based on correct or incorrect answers.</p>
+              <p className="text-gray-700">Drag-and-drop problem-nodes, define problem flows, and create branching paths based on correct or incorrect answers.</p>
               <h3 className="text-xl font-semibold text-gray-800">Adaptive Difficulty</h3>
-              <p className="text-gray-700">Students who struggle receive scaffolded hints; those who ace it get harder, more challenging puzzles.</p>
+              <p className="text-gray-700">Create custom branching logic so that users are sent to harder or easier problems based on their submissions</p>
               <h3 className="text-xl font-semibold text-gray-800">6-Digit Sharing Code</h3>
               <p className="text-gray-700">Teachers share adventures via a short access code</p>
           </div>
@@ -54,7 +48,7 @@ export default function About() {
             <div >
               <div className="text-4xl font-bold text-blue-600">1</div>
               <h3 className="text-xl font-semibold text-gray-800">Create</h3>
-              <p className="text-gray-700">Teacher logs in and designs a series of problems using the graph interface. The teacher sets expected outputs for each problem.</p>
+              <p className="text-gray-700">Teacher logs in and designs a series of problems using the graphical user interface. The teacher sets expected outputs for each problem.</p>
             </div>
             <div >
               <div className="text-4xl font-bold text-blue-600">2</div>
@@ -64,7 +58,7 @@ export default function About() {
             <div >
               <div className="text-4xl font-bold text-blue-600">3</div>
               <h3 className="text-xl font-semibold text-gray-800">Solve</h3>
-              <p className="text-gray-700">Students fill in missing code and submit. If the code is correct, the student will take the green path to the next problem. Otherwise they will take the red path.</p>
+              <p className="text-gray-700">Students fill in missing code and submit. If the code is correct, the student will take the green path to the next problem. Otherwise they will take the red path. To complete an adventure, the ending problem node must be answered correctly.</p>
             </div>
           </div>
         </section>
