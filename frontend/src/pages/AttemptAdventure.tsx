@@ -46,6 +46,7 @@ const AttemptAdventure: React.FC = () => {
     handleSubmit,
     currentNode,
     isGuestAttempt,
+    isCompleted,
   } = useAttemptAdventure(accessCode);
 
   
@@ -134,20 +135,6 @@ const AttemptAdventure: React.FC = () => {
         message={message}
       />
 
-      {attempt.completed && (
-        <div className={`px-4 py-3 rounded ${
-          isGuest 
-            ? "bg-yellow-100 border border-yellow-400 text-yellow-700"
-            : "bg-green-100 border border-green-400 text-green-700"
-        }`}>
-          <strong>Congratulations!</strong>
-          <div className="mt-2">
-            You've completed the adventure!
-            {isGuest && " (Guest mode - progress not saved)"}
-          </div>
-        </div>
-      )}
-
       <div className="flex-1 overflow-hidden">
         <PanelGroup direction="horizontal">
           <Panel defaultSize={67} minSize={30} maxSize={80}>
@@ -212,15 +199,18 @@ const AttemptAdventure: React.FC = () => {
                 </div>
                 
                 <button 
-                  onClick={() => handleSubmit(code, node.data.language)}
-                  className={`w-full font-bold py-2 px-4 rounded mb-4 ${
-                    isGuest 
-                      ? "bg-yellow-600 hover:bg-yellow-700 text-white"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
-                >
-                  Run & Submit
-                </button>
+                    onClick={() => handleSubmit(code, node.data.language)}
+                    disabled={isCompleted}
+                    className={`w-full font-bold py-2 px-4 rounded mb-4 ${
+                      isCompleted
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : isGuest 
+                          ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
+                  >
+                    {isCompleted ? "Adventure Completed" : "Run & Submit"}
+                  </button>
 
                 {output && (
                   <div className={`p-4 rounded-lg mb-4 ${

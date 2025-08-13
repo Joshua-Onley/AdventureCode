@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { Node, Edge } from 'reactflow';
 import type { AdventureCreate, NodeData as SharedNodeData, EdgeData as SharedEdgeData, ProblemBase } from '../components/shared/types';
@@ -22,10 +23,13 @@ export const useAdventureSave = ({
   validateGraph,
   clearSavedData,
   setShouldBlockSave,
-  showError,        
-  showSuccess,    
-  showTokenExpiredMessage  
+  showError,
+  showSuccess,
+  showTokenExpiredMessage
 }: UseAdventureSaveProps) => {
+  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
+
   const handleSaveAdventure = useCallback(async (
     adventureTitle: string,
     adventureDescription: string
@@ -52,6 +56,8 @@ export const useAdventureSave = ({
       return;
     }
 
+    setSaving(true);
+
     try {
       const payload: AdventureCreate = {
         name: adventureTitle,
@@ -77,11 +83,10 @@ export const useAdventureSave = ({
       };
 
       await createAdventure(payload);
-      
       showSuccess("Adventure created successfully!");
-      setShouldBlockSave(false); 
+      setShouldBlockSave(false);
       clearSavedData();
-      
+      navigate("/my-adventures");
     } catch (error) {
       let errorMessage = "Something went wrong. Try again later.";
       if (error instanceof Error) {
@@ -95,13 +100,15 @@ export const useAdventureSave = ({
           errorMessage = error.message;
         }
       }
-      
-      showError(errorMessage); 
+      showError(errorMessage);
       console.error("Error creating adventure:", error);
+    } finally {
+      setSaving(false);
     }
-  }, [nodes, edges, validateGraph, clearSavedData, setShouldBlockSave, showError, showSuccess, showTokenExpiredMessage]);
+  }, [nodes, edges, validateGraph, clearSavedData, setShouldBlockSave, showError, showSuccess, showTokenExpiredMessage, navigate]);
 
   return {
     handleSaveAdventure,
+    saving,
   };
 };

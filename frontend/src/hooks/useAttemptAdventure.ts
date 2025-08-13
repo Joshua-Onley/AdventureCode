@@ -23,6 +23,7 @@ interface UseAttemptAdventureReturn {
   
   currentNode: () => Node<ProblemData> | null;
   isGuestAttempt: (attempt: AdventureAttempt | GuestAttempt) => attempt is GuestAttempt;
+  isCompleted: boolean;
 }
 
 export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptAdventureReturn => {
@@ -47,8 +48,15 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
 
   const currentNode = useCallback(() => {
     if (!nodes.length || !attempt) return null;
-    return nodes.find((n) => n.id === attempt.current_node_id) || null;
-  }, [nodes, attempt]);
+  
+    const foundNode = nodes.find((n) => n.id === attempt.current_node_id);
+    if (!foundNode && adventure?.start_node_id) {
+      setAttempt((prev) => prev ? { ...prev, current_node_id: adventure.start_node_id } : prev);
+      return nodes.find((n) => n.id === adventure.start_node_id) || null;
+    }
+  
+    return foundNode || null;
+  }, [nodes, attempt, adventure?.start_node_id]);
 
   useEffect(() => {
     if (!accessCode) return;
@@ -346,6 +354,9 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
     }
   }, [attempt, currentNode, adventure?.end_node_id, edges, isGuestAttempt]);
 
+  const isCompleted = !!attempt?.completed;
+
+
   return {
     adventure,
     attempt,
@@ -363,5 +374,6 @@ export const useAttemptAdventure = (accessCode: string | undefined): UseAttemptA
     
     currentNode,
     isGuestAttempt,
+    isCompleted,
   };
 };

@@ -72,7 +72,7 @@ const CreateAdventure = () => {
 
   const { loadSavedData, clearSavedData } = useAutoSave(STORAGE_KEY, autoSaveData, shouldBlockSave);
 
-  const { handleSaveAdventure } = useAdventureSave({ 
+  const { handleSaveAdventure, saving } = useAdventureSave({ 
     nodes, 
     edges, 
     validateGraph, 
@@ -119,23 +119,37 @@ const CreateAdventure = () => {
 
   const handleEdgeConditionChange = useCallback((condition: string) => {
     if (!selectedEdge) return;
-
-    setEdges(edges.map(edge => 
+  
+    const updatedEdges = edges.map(edge =>
       edge.id === selectedEdge.id
-        ? { 
-            ...edge, 
+        ? {
+            ...edge,
             data: { ...edge.data, condition },
             style: {
-              stroke: condition === 'correct' 
-                ? '#10B981' 
-                : condition === 'incorrect' 
-                  ? '#EF4444' 
+              stroke: condition === 'correct'
+                ? '#10B981'
+                : condition === 'incorrect'
+                  ? '#EF4444'
                   : '#6B7280'
             }
           }
         : edge
-    ));
-  }, [edges, selectedEdge, setEdges]);
+    );
+  
+    setEdges(updatedEdges);
+  
+    setSelectedEdge({
+      ...selectedEdge,
+      data: { ...selectedEdge.data, condition },
+      style: {
+        stroke: condition === 'correct'
+          ? '#10B981'
+          : condition === 'incorrect'
+            ? '#EF4444'
+            : '#6B7280'
+      }
+    });
+  }, [edges, selectedEdge, setEdges, setSelectedEdge]);
 
   const handleAddProblem = useCallback(() => {
     const result = handleAddProblemToCanvas(newProblem);
@@ -178,6 +192,7 @@ const CreateAdventure = () => {
         shouldBlockSave={shouldBlockSave}
         adventureTitle={adventureTitle}
         nodesLength={nodes.length}
+        saving={saving}
         onSaveAdventure={() => handleSaveAdventure(adventureTitle, adventureDescription)}
         onStartNewAdventure={handleStartNewAdventure}
       />

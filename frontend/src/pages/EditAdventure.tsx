@@ -5,16 +5,16 @@ import ReactFlow, {
   Controls,
   Background,
   MiniMap,
- 
   type Node,
   type Edge,
- 
 } from "reactflow";
 import "reactflow/dist/style.css";
 import ProblemNode from "../components/adventure/ProblemNode";
 import CustomEdge from "../components/adventure/CustomEdge";
 import NodeEditPanel from "../components/adventure/NodeEditPanel";
 import { useAdventureGraph } from "../hooks/useAdventureGraph";
+import { useNodeManagement } from "../hooks/useNodeManagement";
+import { useProblemForm } from "../hooks/useProblemForm";
 import type { ProblemData, GraphEdge, GraphNode, NodeData, EdgeData } from "../components/shared/types";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { isTokenExpired } from "../utils/authHelpers";
@@ -22,14 +22,6 @@ import StatusMessages from "../components/adventure/StatusMessages";
 import { useMessages } from "../hooks/useMessages"
 
 const FASTAPI_BACKEND_URL = import.meta.env.VITE_API_URL;
-
-const generateUUID = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-};
 
 interface Adventure {
   id: number;
@@ -61,6 +53,8 @@ const EditAdventure: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showTokenExpired, setShowTokenExpired] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  
   const { message } = useMessages();
   
   const {
@@ -76,7 +70,23 @@ const EditAdventure: React.FC = () => {
     setSelectedEdge,
   } = useAdventureGraph();
 
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const {
+    createNewNode,
+    resetForm: resetProblemForm
+  } = useProblemForm();
+
+  const { updateNodeData, handleDeleteNode } = useNodeManagement({
+    nodes,
+    edges,
+    selectedNode,
+    setNodes,
+    setEdges,
+    setSelectedNode,
+    createNewNode,
+    resetProblemForm,
+    setSelectedEdge,
+    setShowProblemForm: () => {},
+  });
 
   useEffect(() => {
     const fetchAdventure = async () => {
@@ -87,9 +97,9 @@ const EditAdventure: React.FC = () => {
           return;
         }
 
-         if (isTokenExpired(token)) {
-              setShowTokenExpired(true);
-            }
+        if (isTokenExpired(token)) {
+          setShowTokenExpired(true);
+        }
 
         const response = await axios.get(
           `${FASTAPI_BACKEND_URL}/api/adventures/${id}`,
@@ -101,7 +111,6 @@ const EditAdventure: React.FC = () => {
         const adventureData = response.data;
         setAdventure(adventureData);
 
-       
         const flowNodes = adventureData.graph_data.nodes.map((n: NodeData) => ({
           id: n.id,
           type: n.type || "problemNode",
@@ -114,7 +123,6 @@ const EditAdventure: React.FC = () => {
 
         setNodes(flowNodes);
 
-       
         const flowEdges = adventureData.graph_data.edges.map((e: EdgeData) => ({
           id: e.id,
           source: e.source,
@@ -158,16 +166,15 @@ const EditAdventure: React.FC = () => {
   };
 
   const handleSaveAdventure = async () => {
-
     const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
-         if (isTokenExpired(token)) {
-              setShowTokenExpired(true);
-              return
-            }
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    if (isTokenExpired(token)) {
+      setShowTokenExpired(true);
+      return
+    }
 
     const validationError = validateGraph(nodes, edges);
     if (validationError) {
@@ -178,12 +185,6 @@ const EditAdventure: React.FC = () => {
     setSaving(true);
     
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
       const backendNodes = nodes.map(node => ({
         id: node.id,
         type: node.type,
@@ -206,10 +207,6 @@ const EditAdventure: React.FC = () => {
           condition: edge.data?.condition || "default"
         }
       }));
-
-      if (!adventure) {
-        return <div>Loading...</div>
-      }
 
       const payload = {
         name: adventure.name,
@@ -240,17 +237,12 @@ const EditAdventure: React.FC = () => {
     }
   };
 
-  const updateNodeData = (nodeId: string, data: Partial<ProblemData>) => {
-    setNodes(nodes.map(node => 
-      node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-    ));
-    
-    if (selectedNode && selectedNode.id === nodeId) {
-      setSelectedNode({
-        ...selectedNode,
-        data: { ...selectedNode.data, ...data }
-      });
-    }
+  const generateUUID = (): string => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   };
 
   const handleAddNode = () => {
@@ -272,19 +264,6 @@ const EditAdventure: React.FC = () => {
     setNodes([...nodes, newNode]);
     setSelectedNode(newNode);
     setSelectedEdge(null);
-  };
-
-  const handleDeleteNode = (nodeId: string) => {
-    
-    setNodes(nodes.filter(node => node.id !== nodeId));
-    
-    setEdges(edges.filter(
-      edge => edge.source !== nodeId && edge.target !== nodeId
-    ));
-    
-    if (selectedNode?.id === nodeId) {
-      setSelectedNode(null);
-    }
   };
 
   const handleDeleteEdge = (edgeId: string) => {
@@ -373,6 +352,7 @@ const EditAdventure: React.FC = () => {
                     <select
                       value={selectedEdge.data?.condition || "correct"}
                       onChange={(e) => {
+                        const newCondition = e.target.value;
                         const updatedEdges = edges.map(edge => 
                           edge.id === selectedEdge.id 
                             ? { 
@@ -389,10 +369,20 @@ const EditAdventure: React.FC = () => {
                             : edge
                         );
                         setEdges(updatedEdges);
+                        setSelectedEdge({
+                          ...selectedEdge,
+                          data: { ...selectedEdge.data, condition: newCondition },
+                          style: {
+                            stroke: newCondition === 'correct' 
+                              ? '#10B981' 
+                              : newCondition === 'incorrect' 
+                                ? '#EF4444' 
+                                : '#6B7280'
+                          }
+                        });
                       }}
                       className="w-full p-2 border border-gray-300 rounded"
                     >
-                      
                       <option value="correct">Correct Solution</option>
                       <option value="incorrect">Incorrect Solution</option>
                     </select>

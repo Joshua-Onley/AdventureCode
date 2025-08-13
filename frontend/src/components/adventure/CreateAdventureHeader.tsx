@@ -6,6 +6,7 @@ interface AdventureHeaderProps {
   adventureTitle: string;
   nodesLength: number;
   onSaveAdventure: () => void;
+  saving: boolean;
   onStartNewAdventure: () => void;
 }
 
@@ -14,6 +15,7 @@ const AdventureHeader: React.FC<AdventureHeaderProps> = ({
   adventureTitle,
   nodesLength,
   onSaveAdventure,
+  saving,
   onStartNewAdventure,
 }) => {
   const navigate = useNavigate();
@@ -24,10 +26,15 @@ const AdventureHeader: React.FC<AdventureHeaderProps> = ({
       <div className="flex space-x-2">
         <button
           onClick={shouldBlockSave ? onStartNewAdventure : onSaveAdventure}
-          disabled={!adventureTitle.trim() || nodesLength === 0}
+          disabled={!adventureTitle.trim() || nodesLength === 0 || saving}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
         >
-          {shouldBlockSave ? "Create New Adventure" : "Save Adventure"}
+          {saving 
+            ? "Saving..." 
+            : shouldBlockSave 
+              ? "Create New Adventure" 
+              : "Save Adventure"
+          }
         </button>
         <button
           onClick={() => navigate("/")}
