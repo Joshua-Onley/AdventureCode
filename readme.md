@@ -1,6 +1,6 @@
 # **Adventure Code**
 
-A web-based platform live at for creating and sharing interactive coding adventures that promotes active learning through gamification and adaptive problem sequences. Live at: [Adventure Code](https://adventurecode.tech/).
+A web-based platform for creating and sharing coding adventures - promoting active learning through gamification and adaptive problem sequences. Live at: [https://adventurecode.tech/](https://adventurecode.tech/).
 
 ## **Overview**
 
@@ -41,7 +41,7 @@ Adventure Code follows a 3-tier architecture
 
 - **Frontend**: React with TypeScript, Vite, React Flow, and TailwindCSS
 - **Backend**: FastAPI with Python
-- **Database**: PostgreSQL hosted on supabase
+- **Database**: PostgreSQL hosted on Supabase
 - **Deployment**: Azure Static Web Apps (frontend) and Azure App Service (backend)
 
 ## **DevOps and Deployment**
@@ -76,11 +76,11 @@ Adventure Code follows a 3-tier architecture
 
 12. Exit the backend directory by running `cd ..`
 
-13. Install postgresql via homebrew - run `brew install postgresql`
+13. Install PostgreSQL via homebrew - run `brew install postgresql`
 
-14. Start running postgresql locally - run `brew services start postgresql` (may need to append version to the end of postgresql)
+14. Start running PostgreSQL locally - run `brew services start postgresql` (may need to append version to the end of postgresql)
 
-15. Open the postgresql shell using `psql postgres` and then Run <pre>CREATE USER dev_user WITH PASSWORD 'dev_password';
+15. Open the PostgreSQL shell using `psql postgres` and then Run <pre>CREATE USER dev_user WITH PASSWORD 'dev_password';
 CREATE DATABASE adventure_code OWNER dev_user;
 GRANT ALL PRIVILEGES ON DATABASE adventure_code TO dev_user;
 </pre> to create the Database
