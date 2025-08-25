@@ -169,8 +169,10 @@ const CreateProblem = () => {
        
       
       {success ? (
-        <div className="success-message">
-          {success} 
+        <div className="className=bg-green-50 rounded-lg p-6 m-4 text-center">
+          <div className="text-green-800 text-lg font-medium mb-4">
+            {success}
+          </div>
 
           <button 
             onClick={() => {
@@ -181,7 +183,7 @@ const CreateProblem = () => {
               
               
             }}
-            className="button button-primary"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
           > 
           Create Another Problem
           </button>
