@@ -5,11 +5,13 @@ import uuid
 from enum import Enum
 from .problem import ProblemBase, ProblemCreate
 
+
 class NodeData(BaseModel):
     id: UUID4
     position: Dict[str, float]
     data: ProblemBase
     type: Optional[str] = None
+
 
 class EdgeData(BaseModel):
     id: str
@@ -18,19 +20,23 @@ class EdgeData(BaseModel):
     data: Dict[str, Any] = {}
     type: Optional[str] = None
 
+
 class GraphData(BaseModel):
     nodes: List[NodeData]
     edges: List[EdgeData]
+
 
 class AdventureBase(BaseModel):
     name: str
     description: Optional[str] = None
     is_public: bool = False
-    request_public: bool = False  
+    request_public: bool = False
+
 
 class AdventureCreate(AdventureBase):
     problems: List[ProblemCreate]
     graph_data: GraphData
+
 
 class Adventure(AdventureBase):
     id: int
@@ -50,14 +56,17 @@ class Adventure(AdventureBase):
     end_node_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 class AdventureAttemptBase(BaseModel):
     current_node_id: UUID4
     outcome: Optional[str] = None
 
+
 class AdventureAttemptCreate(AdventureAttemptBase):
     start_node_id: UUID4
+
 
 class AdventureAttempt(AdventureAttemptBase):
     id: int
@@ -70,7 +79,8 @@ class AdventureAttempt(AdventureAttemptBase):
     duration: Optional[timedelta] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 class AdventureSummary(BaseModel):
     id: int
@@ -80,9 +90,10 @@ class AdventureSummary(BaseModel):
     total_attempts: int
     total_completions: int
     approval_status: str
-    
+
     class Config:
-        orm_mode = True
+        from_attributes = True
+
 
 class NodeStatus(str, Enum):
     started = "started"
@@ -90,11 +101,13 @@ class NodeStatus(str, Enum):
     incorrect = "incorrect"
     completed = "completed"
 
+
 class AdventureProgress(BaseModel):
     current_node_id: UUID4
     outcome: NodeStatus
-    code: str  
+    code: str
     completed: bool = False
+
 
 class AdventureUpdate(BaseModel):
     name: Optional[str] = None
